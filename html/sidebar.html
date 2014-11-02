@@ -1,0 +1,18 @@
+{{$states := index . "states"}}
+
+<div id="sidebar">
+<ol>
+{{range $listYear := index . "years"}}
+	<li class="yearList">
+	<a href="#hide{{$listYear}}" id="hide{{$listYear}}" class="hide">+</a>
+	<a href="#show{{$listYear}}" id="show{{$listYear}}" class="show">–</a>
+	<label for="{{$listYear}}" class="sidebarParent"><a href=/{{$listYear}}>{{$listYear}}</a></label>
+	<ol>
+	{{range $states}}
+		<li class="stateList"><a href=/{{$listYear}}/{{.}}>{{.}}</a></li>
+	{{end}}
+	</ol>
+	</li>
+{{end}}
+</ol>
+</div>

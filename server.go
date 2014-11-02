@@ -10,9 +10,10 @@ import (
 )
 
 type partyResult struct {
-	Name  string
-	Votes int
-	Seats int
+	Name          string
+	Votes         int
+	Seats         int
+	ExpectedSeats float64
 }
 
 type candidateResult struct {
@@ -33,10 +34,17 @@ type stateResult struct {
 	Districts  []districtResult
 }
 
+type yearResult struct {
+	TotalVotes int
+	TotalSeats int // needed for template duck typing
+	Parties    []partyResult
+	States     map[string]stateResult
+}
+
 var years []string
 var states []string
 
-var results map[string]map[string]stateResult
+var results map[string]yearResult
 
 var rootTemplate *template.Template
 var yearTemplate *template.Template
@@ -48,6 +56,11 @@ func templateRenderPercentage(numerator, denominator int) string {
 
 func templateRenderDistrict(number int) int {
 	return number + 1
+}
+
+func templateLargestPartyDiff(parties []partyResult) string {
+	largestParty := parties[0]
+	return string(largestParty.Name[0]) + "+" + fmt.Sprintf("%.1f", float64(largestParty.Seats)-largestParty.ExpectedSeats)
 }
 
 func parseYear(url string) string {
@@ -69,7 +82,10 @@ func parseState(url string) string {
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
-	err := rootTemplate.Execute(w, years)
+	err := rootTemplate.Execute(w, map[string]interface{}{
+		"years":  years,
+		"states": states,
+	})
 	if err != nil {
 		panic(err.Error())
 	}
@@ -77,7 +93,12 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 
 func yearHandler(w http.ResponseWriter, r *http.Request) {
 	year := parseYear(r.URL.Path)
-	err := yearTemplate.Execute(w, map[string]interface{}{"year": year, "states": states})
+	err := yearTemplate.Execute(w, map[string]interface{}{
+		"years":      years,
+		"year":       year,
+		"states":     states,
+		"yearResult": results[year],
+	})
 	if err != nil {
 		panic(err.Error())
 	}
@@ -87,12 +108,11 @@ func stateHandler(w http.ResponseWriter, r *http.Request) {
 	year := parseYear(r.URL.Path)
 	state := parseState(r.URL.Path)
 	err := stateTemplate.Execute(w, map[string]interface{}{
-		"year":       year,
-		"state":      state,
-		"totalVotes": results[year][state].TotalVotes,
-		"totalSeats": results[year][state].TotalSeats,
-		"parties":    results[year][state].Parties,
-		"districts":  results[year][state].Districts,
+		"years":       years,
+		"year":        year,
+		"states":      states,
+		"state":       state,
+		"stateResult": results[year].States[state],
 	})
 	if err != nil {
 		panic(err.Error())
@@ -112,25 +132,35 @@ func main() {
 	jsonDecoder = json.NewDecoder(file)
 	jsonDecoder.Decode(&results)
 	file.Close()
+	for year, yearResult := range results {
+		yearResult.TotalSeats = 435
+		results[year] = yearResult
+	}
 
-	var err error
-	rootTemplate, err = template.ParseFiles("html/root.html")
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-	yearTemplate, err = template.ParseFiles("html/year.html")
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
 	funcMap := template.FuncMap{
 		"renderPercentage": templateRenderPercentage,
 		"renderDistrict":   templateRenderDistrict,
+		"largestPartyDiff": templateLargestPartyDiff,
+	}
+
+	var err error
+	rootTemplate = template.New("root.html")
+	rootTemplate = rootTemplate.Funcs(funcMap)
+	rootTemplate, err = rootTemplate.ParseFiles("html/root.html", "html/header.html", "html/footer.html", "html/sidebar.html")
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	yearTemplate = template.New("year.html")
+	yearTemplate = yearTemplate.Funcs(funcMap)
+	yearTemplate, err = yearTemplate.ParseFiles("html/year.html", "html/header.html", "html/footer.html", "html/sidebar.html")
+	if err != nil {
+		fmt.Println(err.Error())
+		return
 	}
 	stateTemplate = template.New("state.html")
 	stateTemplate = stateTemplate.Funcs(funcMap)
-	stateTemplate, err = stateTemplate.ParseFiles("html/state.html")
+	stateTemplate, err = stateTemplate.ParseFiles("html/state.html", "html/header.html", "html/footer.html", "html/sidebar.html")
 	if err != nil {
 		fmt.Println(err.Error())
 		return

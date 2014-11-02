@@ -1,22 +1,25 @@
+{{template "header.html" .}}
+
 {{$year := index . "year"}}
 {{$state := index . "state"}}
-{{$totalVotes := index . "totalVotes"}}
-{{$totalSeats := index . "totalSeats"}}
+{{$stateResult := index . "stateResult"}}
+
+{{template "sidebar.html" .}}
+
+<div>
 <h1>{{$year}} — {{$state}}</h1>
 <a href=/>Home</a> <a href=/{{$year}}>{{$year}}</a>
 <h2>Overall Results</h2>
-<table><thead><th>Party</th><th>Votes</th><th></th><th>Seats</th><th></th></thead><tbody>
-{{range index . "parties"}}
-	<tr><td>{{.Name}}</td><td>{{.Votes}}</td><td>{{renderPercentage .Votes $totalVotes}}</td><td>{{.Seats}}</td><td>{{renderPercentage .Seats $totalSeats}}</tr>
-{{end}}
-<tr><td>Total</td><td>{{$totalVotes}}<td></td><td>{{$totalSeats}}</td><td></td></tr>
-</tbody></table>
-{{range $number, $district := index . "districts"}}
+{{template "overallTable" $stateResult}}
+{{range $number, $district := $stateResult.Districts}}
 	<h2>District {{renderDistrict $number}}</h2>
-	<table><thead><th>Candidate</th><th>Party</th><th>Votes</th><th>Percentage</th></thead><tbody>
+	<table><thead><tr><th>Candidate</th><th>Party</th><th>Votes</th><th>Percentage</th></tr></thead><tbody>
 	{{range $district.Candidates}}
 		<tr><td>{{.Name}}</td><td>{{.Party}}</td><td>{{.Votes}}</td><td>{{renderPercentage .Votes $district.TotalVotes}}</td></tr>
 	{{end}}
 	<tr><td>Total</td><td></td><td>{{$district.TotalVotes}}</td></tr>
 	</tbody></table>
 {{end}}
+</div>
+
+{{template "footer.html" .}}

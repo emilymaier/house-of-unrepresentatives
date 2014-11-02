@@ -1,6 +1,16 @@
+{{template "header.html" .}}
+
 {{$year := index . "year"}}
+{{$yearResult := index . "yearResult"}}
+
+{{template "sidebar.html" .}}
+
 <h1>{{$year}}</h1>
-<a href=/>Home</a><br /><br />
+<p><a href=/>Home</a></p>
+{{template "overallTable" $yearResult}}
 {{range index . "states"}}
-	<a href=/{{$year}}/{{.}}>{{.}}</a>
+	{{$stateResult := index $yearResult.States .}}
+	<a href=/{{$year}}/{{.}}>{{.}}</a> {{largestPartyDiff $stateResult.Parties}}
 {{end}}
+
+{{template "footer.html" .}}

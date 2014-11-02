@@ -1,4 +1,10 @@
+{{template "header.html" .}}
+
+{{template "sidebar.html" .}}
+
 <h1>House of Representatives Election Results</h1>
-{{range .}}
+{{range index . "years"}}
 	<a href=/{{.}}>{{.}}</a>
 {{end}}
+
+{{template "footer.html" .}}

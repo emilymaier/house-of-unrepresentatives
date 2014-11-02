@@ -45,7 +45,7 @@ def parse_candidates(lines):
 	return candidates, votes, orphaned_district_numbers
 
 def parse_state(state_raw):
-	state = state_raw.split("\nRecapitulation of Votes Cast in")[0].split("Total ..........")[0].split("\n..........")[0].split("\nPresidential electors ..........")[0].split("\n\u000c..........")[0].split("\n\u000cRepublican")[0]
+	state = state_raw.split("\nRecapitulation of Votes Cast in")[0].split("Total ..........")[0].split("\n..........")[0].split("\nPresidential electors ..........")[0].split("\n\u000c..........")[0].split("\n\u000cRepublican")[0].split("Senator ..........")[0]
 	candidates, votes, orphaned_district_numbers = parse_candidates(state.split("\n"))
 	state_result = {"totalVotes": 0, "totalSeats": 0, "parties": [], "districts": []}
 	unsorted_parties = {}
@@ -74,7 +74,7 @@ def parse_state(state_raw):
 				pass
 		current_candidate_votes = votes.pop(0)
 		if candidate[1] not in unsorted_parties:
-			unsorted_parties[candidate[1]] = {"name": candidate[1], "votes": 0, "seats": 0}
+			unsorted_parties[candidate[1]] = {"name": candidate[1], "votes": 0, "seats": 0, "expectedSeats": 0.0}
 		unsorted_parties[candidate[1]]["votes"] += current_candidate_votes
 		if current_candidate_votes > district_winner_votes:
 			district_winner_party = candidate[1]
@@ -87,7 +87,9 @@ def parse_state(state_raw):
 		state_result["districts"].pop(0)
 	state_result["totalSeats"] = len(state_result["districts"])
 	unsorted_parties[district_winner_party]["seats"] += 1
-	state_result["parties"] = sorted(unsorted_parties.values(), key=operator.itemgetter("votes"), reverse=True)
+	for party in unsorted_parties.values():
+		party["expectedSeats"] = float(party["votes"]) * state_result["totalSeats"] / state_result["totalVotes"]
+	state_result["parties"] = sorted(unsorted_parties.values(), key=operator.itemgetter("seats"), reverse=True)
 	return state_result
 
 json_input = open("stateInfo.json", "r")
@@ -113,11 +115,19 @@ for year in range(2000, 2014, 2):
 	state_regex = re.compile("STATES REPRESENTATIVE1?\n")
 	states = re.split(state_regex, election_string)
 
-	complete_year = {}
+	year_result = {"totalVotes": 0, "parties": [], "states": {}}
 	for state_number in range(50):
-		complete_year[state_names[state_number]] = parse_state(states[state_number + 1])
+		year_result["states"][state_names[state_number]] = parse_state(states[state_number + 1])
 
-	for state_name, state_result in complete_year.items():
+	unsorted_parties = {}
+	for state_name, state_result in year_result["states"].items():
+		for party in state_result["parties"]:
+			if party["name"] not in unsorted_parties:
+				unsorted_parties[party["name"]] = {"name": party["name"], "votes": 0, "seats": 0, "expectedSeats": 0}
+			unsorted_parties[party["name"]]["votes"] += party["votes"]
+			unsorted_parties[party["name"]]["seats"] += party["seats"]
+		year_result["totalVotes"] += state_result["totalVotes"]
+
 		print(state_name + ":")
 		if year >= 1992 and year < 2002:
 			current_apportionment = apportionment_1992
@@ -131,7 +141,12 @@ for year in range(2000, 2014, 2):
 				print("%30s\t%25s\t%d" % (candidate["name"], candidate["party"], candidate["votes"]))
 			print("")
 		print("")
-	complete_results[year] = complete_year
+
+	for party in unsorted_parties.values():
+		party["expectedSeats"] = float(party["votes"]) * 435 / year_result["totalVotes"]
+	year_result["parties"] = sorted(unsorted_parties.values(), key=operator.itemgetter("seats"), reverse=True)
+
+	complete_results[year] = year_result
 
 json_output = open("results.json", "w")
 json_output.write(json.dumps(complete_results))

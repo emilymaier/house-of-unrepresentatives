@@ -1,0 +1,68 @@
+{{define "overallTable"}}
+{{$totalVotes := .TotalVotes}}
+{{$totalSeats := .TotalSeats}}
+<table><thead><tr><th>Party</th><th>Votes</th><th></th><th>Seats</th><th></th><th>Expected Seats</th></tr></thead><tbody>
+{{range .Parties}}
+	<tr><td>{{.Name}}</td><td>{{.Votes}}</td><td>{{renderPercentage .Votes $totalVotes}}</td><td>{{.Seats}}</td><td>{{renderPercentage .Seats $totalSeats}}</td><td>{{printf "%.1f" .ExpectedSeats}}</td></tr>
+{{end}}
+<tr><td>Total</td><td>{{$totalVotes}}<td></td><td>{{$totalSeats}}</td><td></td></tr>
+</tbody></table>
+{{end}}
+
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+	#container {
+		padding-left: 175px;
+	}
+	#sidebar {
+		position: absolute;
+		top: 0; bottom: 0; left: 0;
+		width: 175px;
+	}
+	#sidebar ol {
+		padding: 0;
+	}
+	.yearList {
+		list-style: none;
+		padding-left: 10px;
+	}
+	.stateList {
+		list-style: none;
+		padding-left: 25px;
+	}
+	.stateList > a {
+		color: #000000;
+		text-decoration: none;
+		font-size: 80%;
+	}
+	.sidebarParent + input[type=checkbox] + ol {
+		display: none;
+	}
+	.sidebarParent + input[type=checkbox]:checked + ol {
+		display: block;
+	}
+	.show {
+		display: none;
+	}
+	.hide:target + .show {
+		display: inline;
+	}
+	.hide:target {
+		display: none;
+	}
+	.hide ~ ol {
+		display: none;
+	}
+	.hide:target ~ ol {
+		display: inline;
+	}
+	.hide, .show {
+		color: #000000;
+		text-decoration: none;
+	}
+</style>
+</head>
+<body>
+<div id="container">
