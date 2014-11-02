@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"net/http"
 	"os"
 	"strings"
@@ -37,6 +38,18 @@ var states []string
 
 var results map[string]map[string]stateResult
 
+var rootTemplate *template.Template
+var yearTemplate *template.Template
+var stateTemplate *template.Template
+
+func templateRenderPercentage(numerator, denominator int) string {
+	return fmt.Sprintf("%.1f%%", float64(numerator*100)/float64(denominator))
+}
+
+func templateRenderDistrict(number int) int {
+	return number + 1
+}
+
 func parseYear(url string) string {
 	for _, year := range years {
 		if strings.HasPrefix(url, "/"+year) {
@@ -56,41 +69,33 @@ func parseState(url string) string {
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "<h1>House of Representatives Election Results</h1>")
-	for _, year := range years {
-		fmt.Fprintf(w, "<a href=/%s>%s</a> ", year, year)
+	err := rootTemplate.Execute(w, years)
+	if err != nil {
+		panic(err.Error())
 	}
 }
 
 func yearHandler(w http.ResponseWriter, r *http.Request) {
 	year := parseYear(r.URL.Path)
-	fmt.Fprintf(w, "<h1>%s</h1>", year)
-	fmt.Fprint(w, "<a href=/>Home</a><br /><br />")
-	for _, state := range states {
-		fmt.Fprintf(w, "<a href=/%s/%s>%s</a> ", year, state, state)
+	err := yearTemplate.Execute(w, map[string]interface{}{"year": year, "states": states})
+	if err != nil {
+		panic(err.Error())
 	}
 }
 
 func stateHandler(w http.ResponseWriter, r *http.Request) {
 	year := parseYear(r.URL.Path)
 	state := parseState(r.URL.Path)
-	fmt.Fprintf(w, "<h1>%s — %s</h1>", year, state)
-	fmt.Fprintf(w, "<a href=/>Home</a> <a href=/%s>%s</a>", year, year)
-	fmt.Fprint(w, "<h2>Overall Results</h2>")
-	fmt.Fprint(w, "<table><thead><th>Party</th><th>Votes</th><th></th><th>Seats</th><th></th></thead><tbody>")
-	for _, currentParty := range results[year][state].Parties {
-		fmt.Fprintf(w, "<tr><td>%s</td><td>%d</td><td>%.1f%%</td><td>%d</td><td>%.1f%%</td></tr>", currentParty.Name, currentParty.Votes, float64(currentParty.Votes*100)/float64(results[year][state].TotalVotes), currentParty.Seats, float64(currentParty.Seats*100)/float64(results[year][state].TotalSeats))
-	}
-	fmt.Fprintf(w, "<tr><td>Total</td><td>%d</td><td></td><td>%d</td><td></td></tr>", results[year][state].TotalVotes, results[year][state].TotalSeats)
-	fmt.Fprint(w, "</tbody></table>")
-	for districtNumber, currentDistrict := range results[year][state].Districts {
-		fmt.Fprintf(w, "<h2>District %d</h2>", districtNumber+1)
-		fmt.Fprint(w, "<table><thead><th>Candidate</th><th>Party</th><th>Votes</th><th>Percentage</th></thead><tbody>")
-		for _, currentCandidate := range currentDistrict.Candidates {
-			fmt.Fprintf(w, "<tr><td>%s</td><td>%s</td><td>%d</td><td>%.1f%%</td></tr>", currentCandidate.Name, currentCandidate.Party, currentCandidate.Votes, float64(currentCandidate.Votes*100)/float64(currentDistrict.TotalVotes))
-		}
-		fmt.Fprintf(w, "<tr><td>Total</td><td></td><td>%d</td></tr>", currentDistrict.TotalVotes)
-		fmt.Fprint(w, "</tbody></table>")
+	err := stateTemplate.Execute(w, map[string]interface{}{
+		"year":       year,
+		"state":      state,
+		"totalVotes": results[year][state].TotalVotes,
+		"totalSeats": results[year][state].TotalSeats,
+		"parties":    results[year][state].Parties,
+		"districts":  results[year][state].Districts,
+	})
+	if err != nil {
+		panic(err.Error())
 	}
 }
 
@@ -107,6 +112,29 @@ func main() {
 	jsonDecoder = json.NewDecoder(file)
 	jsonDecoder.Decode(&results)
 	file.Close()
+
+	var err error
+	rootTemplate, err = template.ParseFiles("html/root.html")
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	yearTemplate, err = template.ParseFiles("html/year.html")
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	funcMap := template.FuncMap{
+		"renderPercentage": templateRenderPercentage,
+		"renderDistrict":   templateRenderDistrict,
+	}
+	stateTemplate = template.New("state.html")
+	stateTemplate = stateTemplate.Funcs(funcMap)
+	stateTemplate, err = stateTemplate.ParseFiles("html/state.html")
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
 
 	http.HandleFunc("/", rootHandler)
 	for _, year := range years {

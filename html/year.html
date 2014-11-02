@@ -1,0 +1,6 @@
+{{$year := index . "year"}}
+<h1>{{$year}}</h1>
+<a href=/>Home</a><br /><br />
+{{range index . "states"}}
+	<a href=/{{$year}}/{{.}}>{{.}}</a>
+{{end}}
