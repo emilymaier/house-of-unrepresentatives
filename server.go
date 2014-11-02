@@ -5,9 +5,14 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"sort"
 	"strings"
 )
+
+type partyResult struct {
+	name  string
+	votes int
+	seats int
+}
 
 type candidateResult struct {
 	name  string
@@ -21,34 +26,16 @@ type districtResult struct {
 }
 
 type stateResult struct {
-	partyNames []string
-	partyVotes []int
 	totalVotes int
+	totalSeats int
+	parties    []partyResult
 	districts  []districtResult
-}
-
-type sortedPartyVotes struct {
-	parties []string
-	votes   []int
 }
 
 var years []string
 var states []string
 
 var results map[string]map[string]stateResult
-
-func (this sortedPartyVotes) Len() int {
-	return len(this.parties)
-}
-
-func (this sortedPartyVotes) Swap(i, j int) {
-	this.parties[i], this.parties[j] = this.parties[j], this.parties[i]
-	this.votes[i], this.votes[j] = this.votes[j], this.votes[i]
-}
-
-func (this sortedPartyVotes) Less(i, j int) bool {
-	return this.votes[i] > this.votes[j]
-}
 
 func parseYear(url string) string {
 	for _, year := range years {
@@ -90,25 +77,54 @@ func stateHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "<h1>%s — %s</h1>", year, state)
 	fmt.Fprintf(w, "<a href=/>Home</a> <a href=/%s>%s</a>", year, year)
 	fmt.Fprint(w, "<h2>Overall Results</h2>")
-	fmt.Fprint(w, "<table><tbody>")
-	for i, currentPartyName := range results[year][state].partyNames {
-		fmt.Fprintf(w, "<tr><td>%s</td><td>%d</td></tr>", currentPartyName, results[year][state].partyVotes[i])
+	fmt.Fprint(w, "<table><thead><th>Party</th><th>Votes</th><th></th><th>Seats</th><th></th></thead><tbody>")
+	for _, currentParty := range results[year][state].parties {
+		fmt.Fprintf(w, "<tr><td>%s</td><td>%d</td><td>%.1f%%</td><td>%d</td><td>%.1f%%</td></tr>", currentParty.name, currentParty.votes, float64(currentParty.votes*100)/float64(results[year][state].totalVotes), currentParty.seats, float64(currentParty.seats*100)/float64(results[year][state].totalSeats))
 	}
-	fmt.Fprintf(w, "<tr><td>Total</td><td>%d</td></tr>", results[year][state].totalVotes)
+	fmt.Fprintf(w, "<tr><td>Total</td><td>%d</td><td></td><td>%d</td><td></td></tr>", results[year][state].totalVotes, results[year][state].totalSeats)
 	fmt.Fprint(w, "</tbody></table>")
 	for districtNumber, currentDistrict := range results[year][state].districts {
 		fmt.Fprintf(w, "<h2>District %d</h2>", districtNumber+1)
-		fmt.Fprint(w, "<table><tbody>")
+		fmt.Fprint(w, "<table><thead><th>Candidate</th><th>Party</th><th>Votes</th><th>Percentage</th></thead><tbody>")
 		for _, currentCandidate := range currentDistrict.candidates {
-			fmt.Fprintf(w, "<tr><td>%s</td><td>%s</td><td>%d</td></tr>", currentCandidate.name, currentCandidate.party, currentCandidate.votes)
+			fmt.Fprintf(w, "<tr><td>%s</td><td>%s</td><td>%d</td><td>%.1f%%</td></tr>", currentCandidate.name, currentCandidate.party, currentCandidate.votes, float64(currentCandidate.votes*100)/float64(currentDistrict.totalVotes))
 		}
 		fmt.Fprintf(w, "<tr><td>Total</td><td></td><td>%d</td></tr>", currentDistrict.totalVotes)
 		fmt.Fprint(w, "</tbody></table>")
 	}
 }
 
+func parseRawState(resultsRawState map[string]interface{}) stateResult {
+	var newState stateResult
+	newState.totalVotes = int(resultsRawState["totalVotes"].(float64))
+	newState.totalSeats = int(resultsRawState["totalSeats"].(float64))
+	newState.parties = make([]partyResult, 0)
+	for _, resultsRawParty := range resultsRawState["parties"].([]interface{}) {
+		var newParty partyResult
+		newParty.name = resultsRawParty.(map[string]interface{})["name"].(string)
+		newParty.votes = int(resultsRawParty.(map[string]interface{})["votes"].(float64))
+		newParty.seats = int(resultsRawParty.(map[string]interface{})["seats"].(float64))
+		newState.parties = append(newState.parties, newParty)
+	}
+	newState.districts = make([]districtResult, 0)
+	for _, resultsRawDistrict := range resultsRawState["districts"].([]interface{}) {
+		var newDistrict districtResult
+		newDistrict.totalVotes = int(resultsRawDistrict.(map[string]interface{})["totalVotes"].(float64))
+		newDistrict.candidates = make([]candidateResult, 0)
+		for _, resultsRawCandidate := range resultsRawDistrict.(map[string]interface{})["candidates"].([]interface{}) {
+			var newCandidate candidateResult
+			newCandidate.name = resultsRawCandidate.(map[string]interface{})["name"].(string)
+			newCandidate.party = resultsRawCandidate.(map[string]interface{})["party"].(string)
+			newCandidate.votes = int(resultsRawCandidate.(map[string]interface{})["votes"].(float64))
+			newDistrict.candidates = append(newDistrict.candidates, newCandidate)
+		}
+		newState.districts = append(newState.districts, newDistrict)
+	}
+	return newState
+}
+
 func main() {
-	file, _ := os.Open("data.json")
+	file, _ := os.Open("stateInfo.json")
 	jsonDecoder := json.NewDecoder(file)
 	configData := make(map[string][]string)
 	jsonDecoder.Decode(&configData)
@@ -116,47 +132,17 @@ func main() {
 	years = configData["years"]
 	states = configData["states"]
 
-	resultsRaw := make(map[string]map[string][][][]interface{})
-	for _, year := range years {
-		file, _ := os.Open("json/" + year + ".json")
-		jsonDecoder := json.NewDecoder(file)
-		currentResults := make(map[string][][][]interface{})
-		jsonDecoder.Decode(&currentResults)
-		file.Close()
-		resultsRaw[year] = currentResults
-	}
+	resultsRaw := make(map[string]map[string]interface{})
+	file, _ = os.Open("results.json")
+	jsonDecoder = json.NewDecoder(file)
+	jsonDecoder.Decode(&resultsRaw)
+	file.Close()
 
 	results = make(map[string]map[string]stateResult)
 	for year, resultsRawYear := range resultsRaw {
 		results[year] = make(map[string]stateResult)
 		for state, resultsRawState := range resultsRawYear {
-			var newState stateResult
-			newState.districts = make([]districtResult, 0)
-			tempPartyVotes := make(map[string]int)
-			for _, resultsRawDistrict := range resultsRawState {
-				var newDistrict districtResult
-				newDistrict.candidates = make([]candidateResult, 0)
-				for _, resultsRawCandidate := range resultsRawDistrict {
-					var newCandidate candidateResult
-					newCandidate.name = resultsRawCandidate[0].(string)
-					newCandidate.party = resultsRawCandidate[1].(string)
-					newCandidate.votes = int(resultsRawCandidate[2].(float64))
-					newDistrict.candidates = append(newDistrict.candidates, newCandidate)
-					newDistrict.totalVotes += newCandidate.votes
-					newState.totalVotes += newCandidate.votes
-					tempPartyVotes[newCandidate.party] += newCandidate.votes
-				}
-				newState.districts = append(newState.districts, newDistrict)
-			}
-			sorter := sortedPartyVotes{make([]string, 0), make([]int, 0)}
-			for currentParty, currentVotes := range tempPartyVotes {
-				sorter.parties = append(sorter.parties, currentParty)
-				sorter.votes = append(sorter.votes, currentVotes)
-			}
-			sort.Sort(sorter)
-			newState.partyNames = sorter.parties
-			newState.partyVotes = sorter.votes
-			results[year][state] = newState
+			results[year][state] = parseRawState(resultsRawState.(map[string]interface{}))
 		}
 	}
 
