@@ -1,96 +1,11 @@
 #!/usr/bin/python3
 
+import bs4
 import json
 import operator
 import re
 import sys
 import time
-
-def parse_candidates(lines):
-	candidates = []
-	votes = []
-	orphaned_district_numbers = 0
-	for line in lines:
-		if line == "AT LARGE" or \
-		   line == "" or \
-		   line[:7] == "VerDate" or \
-		   (len(line) > 2 and line[2] == ":") or \
-		   line[:3] == "Jkt" or \
-		   line[:2] == "PO" or \
-		   line[:3] == "Frm" or \
-		   line[:3] == "Fmt" or \
-		   line[:4] == "Sfmt" or \
-		   line[:3] == "C:\\" or \
-		   line == "PUB1" or \
-		   line == "PsN: PUB1" or \
-		   line[0] == "\u000c" or \
-		   line[-10:] == "—Continued":
-			continue
-		if "......." in line:
-			candidates.append(line.replace("1 ", "").split(" .")[0])
-			continue
-		try:
-			votes.append(int(line.replace(",", "").replace("1 ", "")))
-			continue
-		except ValueError:
-			pass
-		if line == "(1 )" or line == "(2 )":
-			votes.append(1)
-			continue
-		try:
-			int(line[:-1])
-			orphaned_district_numbers += 1
-		except ValueError:
-			pass
-	return candidates, votes, orphaned_district_numbers
-
-def parse_state(state_raw):
-	state = state_raw.split("\nRecapitulation of Votes Cast in")[0].split("Total ..........")[0].split("\n..........")[0].split("\nPresidential electors ..........")[0].split("\n\u000c..........")[0].split("\n\u000cRepublican")[0].split("Senator ..........")[0]
-	candidates, votes, orphaned_district_numbers = parse_candidates(state.split("\n"))
-	state_result = {"totalVotes": 0, "totalSeats": 0, "parties": [], "districts": []}
-	unsorted_parties = {}
-	district = {"totalVotes": 0, "candidates": []}
-	district_winner_party = ""
-	district_winner_votes = 0
-	for candidate in candidates:
-		candidate = candidate.rsplit(", ", 1)
-		if len(candidate) is 1:
-			candidate.append(candidate[0])
-			candidate[0] = ""
-		if (candidate[1] == "Republican" or len(district["candidates"]) > 0 and district["candidates"][-1]["party"] != "Republican" and candidate[1] == "Democrat") and orphaned_district_numbers > 0:
-			orphaned_district_numbers -= 1
-			candidate[0] = "0. " + candidate[0]
-		if ". " in candidate[0]:
-			try:
-				int(candidate[0].split(". ")[0])
-				state_result["districts"].append(district)
-				if district_winner_party != "":
-					unsorted_parties[district_winner_party]["seats"] += 1
-				district_winner_party = ""
-				district_winner_votes = 0
-				district = {"totalVotes": 0, "candidates": []}
-				candidate[0] = candidate[0].split(". ", 1)[1]
-			except ValueError:
-				pass
-		current_candidate_votes = votes.pop(0)
-		if candidate[1] not in unsorted_parties:
-			unsorted_parties[candidate[1]] = {"name": candidate[1], "votes": 0, "seats": 0, "expectedSeats": 0.0}
-		unsorted_parties[candidate[1]]["votes"] += current_candidate_votes
-		if current_candidate_votes > district_winner_votes:
-			district_winner_party = candidate[1]
-			district_winner_votes = current_candidate_votes
-		state_result["totalVotes"] += current_candidate_votes
-		district["totalVotes"] += current_candidate_votes
-		district["candidates"].append({"name": candidate[0], "party": candidate[1], "votes": current_candidate_votes})
-	state_result["districts"].append(district)
-	if state_result["districts"][0] == {"totalVotes": 0, "candidates": []}:
-		state_result["districts"].pop(0)
-	state_result["totalSeats"] = len(state_result["districts"])
-	unsorted_parties[district_winner_party]["seats"] += 1
-	for party in unsorted_parties.values():
-		party["expectedSeats"] = float(party["votes"]) * state_result["totalSeats"] / state_result["totalVotes"]
-	state_result["parties"] = sorted(unsorted_parties.values(), key=operator.itemgetter("seats"), reverse=True)
-	return state_result
 
 json_input = open("stateInfo.json", "r")
 config_data = json.loads(json_input.read())
@@ -106,47 +21,173 @@ apportionment_2002 = dict(zip(state_names, apportionment_2002))
 apportionment_2012 = [7, 1, 9, 4, 53, 7, 5, 1, 27, 14, 2, 2, 18, 9, 4, 4, 6, 6, 2, 8, 9, 14, 8, 4, 8, 1, 3, 4, 2, 12, 3, 27, 13, 1, 16, 5, 5, 18, 2, 7, 1, 9, 36, 4, 1, 11, 10, 3, 8, 1]
 apportionment_2012 = dict(zip(state_names, apportionment_2012))
 
-complete_results = {}
-for year in range(2000, 2014, 2):
-	election_file = open("temp/" + str(year) + "election", "r")
-	election_string = election_file.read()
-	election_file.close()
+def finalize_candidate(district, candidate_string, votes):
+	new_candidate = {"name": "", "party": "", "votes": votes}
+	split_candidate = candidate_string.rsplit(", ", 1)
+	if len(split_candidate) == 1:
+		split_candidate = ["", split_candidate[0]]
+	new_candidate["name"], new_candidate["party"] = split_candidate[0], split_candidate[1]
+	district["candidates"].append(new_candidate)
 
-	state_regex = re.compile("STATES REPRESENTATIVE1?\n")
-	states = re.split(state_regex, election_string)
+def finalize_district(state_result, district):
+	for candidate in district["candidates"]:
+		district["totalVotes"] += candidate["votes"]
+	state_result["districts"].append(district)
 
-	year_result = {"totalVotes": 0, "parties": [], "states": {}}
-	for state_number in range(50):
-		year_result["states"][state_names[state_number]] = parse_state(states[state_number + 1])
-
+def finalize_state(year, state, year_result, state_result):
+	if year >= 1992 and year < 2002:
+		current_apportionment = apportionment_1992
+	elif year >= 2002 and year < 2012:
+		current_apportionment = apportionment_2002
+	elif year >= 2012 and year < 2022:
+		current_apportionment = apportionment_2012
+	if current_apportionment[state] != len(state_result["districts"]):
+		print("%d: %s: Incorrect number of districts parsed, expected %d, got %d" % (year, state, current_apportionment[state], len(state_result["districts"])))
+		print(state_result)
+		quit()
+	state_result["totalSeats"] = current_apportionment[state]
 	unsorted_parties = {}
-	for state_name, state_result in year_result["states"].items():
-		for party in state_result["parties"]:
+	for district in state_result["districts"]:
+		state_result["totalVotes"] += district["totalVotes"]
+		winner_party = ""
+		winner_votes = 0
+		for candidate in district["candidates"]:
+			if candidate["votes"] > winner_votes:
+				winner_party = candidate["party"]
+				winner_votes = candidate["votes"]
+			if candidate["party"] not in unsorted_parties:
+				unsorted_parties[candidate["party"]] = {"name": candidate["party"], "votes": 0, "seats": 0, "expectedSeats": 0}
+			unsorted_parties[candidate["party"]]["votes"] += candidate["votes"]
+		unsorted_parties[winner_party]["seats"] += 1
+	for party in unsorted_parties.values():
+		party["expectedSeats"] = float(party["votes"]) * state_result["totalSeats"] / state_result["totalVotes"]
+	state_result["parties"] = sorted(unsorted_parties.values(), key=operator.itemgetter("seats"), reverse=True)
+
+	print("")
+	print("")
+	print(state)
+	i = 1
+	for district in state_result["districts"]:
+		print("")
+		print("District %d" % i)
+		for candidate in district["candidates"]:
+			print("%30s\t%25s\t%d" % (candidate["name"], candidate["party"], candidate["votes"]))
+		i += 1
+
+	year_result["totalVotes"] += state_result["totalVotes"]
+	year_result["states"][state] = state_result
+
+def finalize_year(year, complete_results, year_result):
+	unsorted_parties = {}
+	for state in year_result["states"].values():
+		year_result["totalVotes"] += state_result["totalVotes"]
+		for party in state["parties"]:
 			if party["name"] not in unsorted_parties:
 				unsorted_parties[party["name"]] = {"name": party["name"], "votes": 0, "seats": 0, "expectedSeats": 0}
 			unsorted_parties[party["name"]]["votes"] += party["votes"]
 			unsorted_parties[party["name"]]["seats"] += party["seats"]
-		year_result["totalVotes"] += state_result["totalVotes"]
-
-		print(state_name + ":")
-		if year >= 1992 and year < 2002:
-			current_apportionment = apportionment_1992
-		elif year >= 2002 and year < 2012:
-			current_apportionment = apportionment_2002
-		elif year >= 2012 and year < 2022:
-			current_apportionment = apportionment_2012
-		for district_index in range(0, current_apportionment[state_name]):
-			print(district_index + 1, ":")
-			for candidate in state_result["districts"][district_index]["candidates"]:
-				print("%30s\t%25s\t%d" % (candidate["name"], candidate["party"], candidate["votes"]))
-			print("")
-		print("")
-
 	for party in unsorted_parties.values():
 		party["expectedSeats"] = float(party["votes"]) * 435 / year_result["totalVotes"]
 	year_result["parties"] = sorted(unsorted_parties.values(), key=operator.itemgetter("seats"), reverse=True)
-
 	complete_results[year] = year_result
+
+# handwritten context-sensitive parser ahead, beware!
+complete_results = {}
+for year in range(2000, 2014, 2):
+	year_result = {"totalVotes": 0, "parties": [], "states": {}}
+	state_result = {"totalVotes": 0, "totalSeats": 0, "parties": [], "districts": []}
+	district = {"totalVotes": 0, "candidates": []}
+	election_soup = bs4.BeautifulSoup(open("temp/" + str(year) + "elections.html", "r"))
+	current_candidate = ""
+	current_line = election_soup.find(text=re.compile("FOR UNITED STATES REPRESENTATIVE")).next_sibling.next_sibling
+	state_index = 0
+	while True:
+		if current_line.string:
+			current_string = current_line.string[1:] # remove newline
+			match = re.compile("(.*) \.").search(current_string)
+			if match:
+				# ... sequence
+				current_string = match.group(1)
+				current_candidate += current_string
+				match = re.compile("[0-9]+\.[  ](.*)").search(current_candidate)
+				if match: # new district
+					if len(district["candidates"]) > 0:
+						finalize_district(state_result, district)
+						district = {"totalVotes": 0, "candidates": []}
+					current_string = match.group(1)
+					current_candidate = current_string
+			else:
+				if current_string == "AT LARGE" or current_string == "AT LARGE ":
+					pass
+				elif current_string[:7] == "VerDate":
+					# go to beginning of next page
+					while True:
+						if current_string == "\nFOR UNITED STATES REPRESENTATIVE—Continued":
+							break
+						if current_line.name == "i":
+							current_line = current_line.previous_sibling.previous_sibling
+							break
+						current_line = current_line.next_sibling
+						if current_line.string:
+							current_string = current_line.string
+					current_line = current_line.next_sibling
+				elif current_string == "FOR UNITED STATES REPRESENTATIVE—Continued":
+					current_line = current_line.next_sibling
+				elif current_string[:7] == "(Runoff":
+					current_line = current_line.next_sibling
+				elif current_string != "":
+					if current_string[:2] == "1 ":
+						# remove vote count footnote
+						current_string = current_string[2:]
+					try:
+						current_votes = int(current_string.replace(",", ""))
+						finalize_candidate(district, current_candidate, current_votes)
+						current_candidate = ""
+					except ValueError:
+						# partial candidate name or footnote
+						if current_string == "(1 )" or current_string == "(2 )" or current_string == "(1 ) " or current_string == "(2) ":
+							finalize_candidate(district, current_candidate, 1)
+							current_candidate = ""
+						else:
+							current_candidate += current_string
+		current_line = current_line.next_sibling
+		if current_line.name == "i": # go to next state
+			if current_line.string[:6] == "Due to":
+				current_line = current_line.next_sibling.next_sibling.next_sibling.next_sibling.next_sibling
+				continue
+			finalize_district(state_result, district)
+			district = {"totalVotes": 0, "candidates": []}
+
+			# special cases for when nothing else will work
+			if year == 2002 and state_names[state_index] == "Louisiana":
+				state_result["districts"] = state_result["districts"][:7]
+				state_result["districts"][4] = {"totalVotes": 172462, "candidates": [{"name": "Lee Fletcher", "party": "Republican", "votes": 85744}, {"name": "Rodney Alexander", "party": "Democrat", "votes": 86718}]}
+			elif year == 2006 and state_names[state_index] == "Texas":
+				state_result["districts"][3] = state_result["districts"][-1]
+				state_result["districts"] = state_result["districts"][:-1]
+				state_result["districts"][25] = state_result["districts"][2]
+				state_result["districts"].remove(state_result["districts"][2])
+
+			finalize_state(year, state_names[state_index], year_result, state_result)
+			state_result = {"totalVotes": 0, "totalSeats": 0, "parties": [], "districts": []}
+
+			current_line = current_line.find_next_sibling(text=re.compile("FOR UNITED STATES REPRESENTATIVE($|[^—])"))
+			if not current_line:
+				break
+			current_line = current_line.next_sibling.next_sibling
+			state_index += 1
+			current_candidate = ""
+		elif current_line.name == "a" or (current_line.string and (current_line.string == "\n(42)" or current_line.string[:8] == "\nVerDate")):
+			# go to beginning of next page
+			while not current_line.string or (current_line.string != "FOR UNITED STATES REPRESENTATIVE—Continued" and current_line.string != "\nFOR UNITED STATES REPRESENTATIVE—Continued" and current_line.string != "\n(General Election)2—Continued" and current_line.string != "\nFOR UNITED STATES REPRESENTATIVE—Continued "):
+				if current_line.name == "i":
+					current_line = current_line.previous_sibling.previous_sibling.previous_sibling
+					break
+				if current_line.string and current_line.string == "—Continued":
+					break
+				current_line = current_line.next_sibling
+			current_line = current_line.next_sibling.next_sibling
+	finalize_year(year, complete_results, year_result)
 
 json_output = open("results.json", "w")
 json_output.write(json.dumps(complete_results))

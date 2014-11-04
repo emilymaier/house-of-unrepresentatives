@@ -3,7 +3,7 @@
 mkdir temp/
 for f in pdfs/*
 do
-	pdftotext $f temp/$(basename $f)
+	pdftohtml $f temp/$(basename $f)
 done
 ./parsetext.py
 rm -rfv temp/
