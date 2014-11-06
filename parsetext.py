@@ -71,13 +71,13 @@ def finalize_state(year, state, year_result, state_result):
 				winner_party = candidate["party"]
 				winner_votes = candidate["votes"]
 			if candidate["party"] not in unsorted_parties:
-				unsorted_parties[candidate["party"]] = {"name": candidate["party"], "votes": 0, "seatCount": 0, "expectedSeats": 0, "seats": []}
+				unsorted_parties[candidate["party"]] = {"name": candidate["party"], "votes": 0, "seatCount": 0, "expectedSeats": {"national": 0}, "seats": []}
 			unsorted_parties[candidate["party"]]["votes"] += candidate["votes"]
 		unsorted_parties[winner_party]["seatCount"] += 1
 		unsorted_parties[winner_party]["seats"].append(district_number)
 		district_number += 1
 	for party in unsorted_parties.values():
-		party["expectedSeats"] = float(party["votes"]) * state_result["totalSeats"] / state_result["totalVotes"]
+		party["expectedSeats"]["national"] = float(party["votes"]) * state_result["totalSeats"] / state_result["totalVotes"]
 	state_result["parties"] = sorted(unsorted_parties.values(), key=lambda party: party["seatCount"] * 1000000000 + party["votes"], reverse=True)
 
 	print("")
@@ -99,13 +99,26 @@ def finalize_year(year, complete_results, year_result):
 		year_result["totalVotes"] += state["totalVotes"]
 		for party in state["parties"]:
 			if party["name"] not in unsorted_parties:
-				unsorted_parties[party["name"]] = {"name": party["name"], "votes": 0, "seatCount": 0, "expectedSeats": 0, "seats": []}
+				unsorted_parties[party["name"]] = {"name": party["name"], "votes": 0, "seatCount": 0, "expectedSeats": {"national": 0, "nationalWithout1": 0, "state": 0}, "seats": []}
 			unsorted_parties[party["name"]]["votes"] += party["votes"]
 			unsorted_parties[party["name"]]["seatCount"] += party["seatCount"]
 			if len(party["seats"]) > 0:
 				unsorted_parties[party["name"]]["seats"].append((state_name, party["seats"]))
 	for party in unsorted_parties.values():
-		party["expectedSeats"] = float(party["votes"]) * 435 / year_result["totalVotes"]
+		party["expectedSeats"]["national"] = float(party["votes"]) * 435 / year_result["totalVotes"]
+		multi_district_votes_total = 0
+		multi_district_votes_party = 0
+		for state in year_result["states"].values():
+			if state["totalSeats"] > 1:
+				for state_party in state["parties"]:
+					if state_party["name"] == party["name"]:
+						multi_district_votes_party += state_party["votes"]
+						break
+				multi_district_votes_total += state["totalVotes"]
+			for state_party in state["parties"]:
+				if state_party["name"] == party["name"]:
+					party["expectedSeats"]["state"] += state_party["expectedSeats"]["national"]
+		party["expectedSeats"]["nationalWithout1"] = float(multi_district_votes_party) * 435 / multi_district_votes_total
 
 	year_result["parties"] = sorted(unsorted_parties.values(), key=lambda party: party["seatCount"] * 1000000000 + party["votes"], reverse=True)
 	complete_results[year] = year_result

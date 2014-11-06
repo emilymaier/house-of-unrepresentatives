@@ -9,11 +9,17 @@ import (
 	"strings"
 )
 
+type seatCalculation struct {
+	National         float64
+	NationalWithout1 float64
+	State            float64
+}
+
 type partyResult struct {
 	Name          string
 	Votes         int
 	SeatCount     int
-	ExpectedSeats float64
+	ExpectedSeats seatCalculation
 	Seats         []interface{}
 }
 
@@ -61,7 +67,7 @@ func templateRenderDistrict(number int) int {
 
 func templateLargestPartyDiff(parties []partyResult) string {
 	largestParty := parties[0]
-	return string(largestParty.Name[0]) + "+" + fmt.Sprintf("%.1f", float64(largestParty.SeatCount)-largestParty.ExpectedSeats)
+	return string(largestParty.Name[0]) + "+" + fmt.Sprintf("%.1f", float64(largestParty.SeatCount)-largestParty.ExpectedSeats.National)
 }
 
 func parseYear(url string) string {
@@ -168,6 +174,7 @@ func main() {
 	}
 
 	http.HandleFunc("/", rootHandler)
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
 	for _, year := range years {
 		http.HandleFunc("/"+year, yearHandler)
 		for _, state := range states {

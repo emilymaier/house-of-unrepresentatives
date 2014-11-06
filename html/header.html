@@ -1,7 +1,3 @@
-{{define "resultsTableTop"}}
-<table><thead><tr><th>Party</th><th>Votes</th><th></th><th>Seats</th><th></th><th>Expected Seats</th></tr></thead><tbody>
-{{end}}
-
 {{define "resultsTableBottom"}}
 <tr><td>Total</td><td>{{.TotalVotes}}</td></td><td>{{.TotalSeats}}</td><td></td></tr></tbody></table>
 {{end}}
@@ -9,9 +5,9 @@
 {{define "overallTable"}}
 {{$totalVotes := .TotalVotes}}
 {{$totalSeats := .TotalSeats}}
-{{template "resultsTableTop" .}}
+<table><thead><tr><th>Party</th><th>Votes</th><th></th><th>Seats</th><th></th><th>Expected Seats (National Popular Vote)</th><th>Expected Seats (National Popular Vote Without 1-District States)</th><th>Expected Seats (State Popular Votes)</th></tr></thead><tbody>
 {{range .Parties}}
-	<tr><td>{{.Name}}</td><td>{{.Votes}}</td><td>{{renderPercentage .Votes $totalVotes}}</td><td>{{.SeatCount}}</td><td>{{renderPercentage .SeatCount $totalSeats}}</td><td>{{printf "%.1f" .ExpectedSeats}}</td></tr>
+	<tr><td>{{.Name}}</td><td>{{.Votes}}</td><td>{{renderPercentage .Votes $totalVotes}}</td><td>{{.SeatCount}}</td><td>{{renderPercentage .SeatCount $totalSeats}}</td><td>{{printf "%.1f" .ExpectedSeats.National}}</td><td>{{printf "%.1f" .ExpectedSeats.NationalWithout1}}</td><td>{{printf "%.1f" .ExpectedSeats.State}}</td></tr>
 	{{if len .Seats}}
 		<tr><td>
 		<a href="#hide{{.Name}}" id="hide{{.Name}}" class="hide">+</a>
@@ -32,9 +28,9 @@
 {{define "stateTable"}}
 {{$totalVotes := .TotalVotes}}
 {{$totalSeats := .TotalSeats}}
-{{template "resultsTableTop" .}}
+<table><thead><tr><th>Party</th><th>Votes</th><th></th><th>Seats</th><th></th><th>Expected Seats (National)</th></tr></thead><tbody>
 {{range .Parties}}
-	<tr><td>{{.Name}}</td><td>{{.Votes}}</td><td>{{renderPercentage .Votes $totalVotes}}</td><td>{{.SeatCount}}</td><td>{{renderPercentage .SeatCount $totalSeats}}</td><td>{{printf "%.1f" .ExpectedSeats}}</td></tr>
+	<tr><td>{{.Name}}</td><td>{{.Votes}}</td><td>{{renderPercentage .Votes $totalVotes}}</td><td>{{.SeatCount}}</td><td>{{renderPercentage .SeatCount $totalSeats}}</td><td>{{printf "%.1f" .ExpectedSeats.National}}</td></tr>
 {{end}}
 {{template "resultsTableBottom" .}}
 {{end}}
