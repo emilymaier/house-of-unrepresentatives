@@ -10,7 +10,7 @@
 <h1>{{$year}} — {{$state}}</h1>
 <a href=/>Home</a> <a href=/{{$year}}>{{$year}}</a>
 <h2>Overall Results</h2>
-{{template "overallTable" $stateResult}}
+{{template "stateTable" $stateResult}}
 {{range $number, $district := $stateResult.Districts}}
 	<h2>District {{renderDistrict $number}}</h2>
 	<table><thead><tr><th>Candidate</th><th>Party</th><th>Votes</th><th>Percentage</th></tr></thead><tbody>

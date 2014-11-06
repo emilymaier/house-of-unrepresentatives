@@ -12,8 +12,9 @@ import (
 type partyResult struct {
 	Name          string
 	Votes         int
-	Seats         int
+	SeatCount     int
 	ExpectedSeats float64
+	Seats         []interface{}
 }
 
 type candidateResult struct {
@@ -60,7 +61,7 @@ func templateRenderDistrict(number int) int {
 
 func templateLargestPartyDiff(parties []partyResult) string {
 	largestParty := parties[0]
-	return string(largestParty.Name[0]) + "+" + fmt.Sprintf("%.1f", float64(largestParty.Seats)-largestParty.ExpectedSeats)
+	return string(largestParty.Name[0]) + "+" + fmt.Sprintf("%.1f", float64(largestParty.SeatCount)-largestParty.ExpectedSeats)
 }
 
 func parseYear(url string) string {

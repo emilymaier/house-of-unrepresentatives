@@ -1,12 +1,42 @@
+{{define "resultsTableTop"}}
+<table><thead><tr><th>Party</th><th>Votes</th><th></th><th>Seats</th><th></th><th>Expected Seats</th></tr></thead><tbody>
+{{end}}
+
+{{define "resultsTableBottom"}}
+<tr><td>Total</td><td>{{.TotalVotes}}</td></td><td>{{.TotalSeats}}</td><td></td></tr></tbody></table>
+{{end}}
+
 {{define "overallTable"}}
 {{$totalVotes := .TotalVotes}}
 {{$totalSeats := .TotalSeats}}
-<table><thead><tr><th>Party</th><th>Votes</th><th></th><th>Seats</th><th></th><th>Expected Seats</th></tr></thead><tbody>
+{{template "resultsTableTop" .}}
 {{range .Parties}}
-	<tr><td>{{.Name}}</td><td>{{.Votes}}</td><td>{{renderPercentage .Votes $totalVotes}}</td><td>{{.Seats}}</td><td>{{renderPercentage .Seats $totalSeats}}</td><td>{{printf "%.1f" .ExpectedSeats}}</td></tr>
+	<tr><td>{{.Name}}</td><td>{{.Votes}}</td><td>{{renderPercentage .Votes $totalVotes}}</td><td>{{.SeatCount}}</td><td>{{renderPercentage .SeatCount $totalSeats}}</td><td>{{printf "%.1f" .ExpectedSeats}}</td></tr>
+	{{if len .Seats}}
+		<tr><td>
+		<a href="#hide{{.Name}}" id="hide{{.Name}}" class="hide">+</a>
+		<a href="#show{{.Name}}" id="show{{.Name}}" class="show">–</a>
+		<i>Show seats</i>
+		<ol>
+		{{range .Seats}}
+			{{$stateName := index . 0}}
+			{{$districts := index . 1}}
+			<li class="stateList">{{$stateName}}: {{$districts}}</li>
+		{{end}}
+		</ol></td></tr>
+	{{end}}
 {{end}}
-<tr><td>Total</td><td>{{$totalVotes}}<td></td><td>{{$totalSeats}}</td><td></td></tr>
-</tbody></table>
+{{template "resultsTableBottom" .}}
+{{end}}
+
+{{define "stateTable"}}
+{{$totalVotes := .TotalVotes}}
+{{$totalSeats := .TotalSeats}}
+{{template "resultsTableTop" .}}
+{{range .Parties}}
+	<tr><td>{{.Name}}</td><td>{{.Votes}}</td><td>{{renderPercentage .Votes $totalVotes}}</td><td>{{.SeatCount}}</td><td>{{renderPercentage .SeatCount $totalSeats}}</td><td>{{printf "%.1f" .ExpectedSeats}}</td></tr>
+{{end}}
+{{template "resultsTableBottom" .}}
 {{end}}
 
 <!DOCTYPE html>
@@ -36,12 +66,6 @@
 		color: #000000;
 		text-decoration: none;
 		font-size: 80%;
-	}
-	.sidebarParent + input[type=checkbox] + ol {
-		display: none;
-	}
-	.sidebarParent + input[type=checkbox]:checked + ol {
-		display: block;
 	}
 	.show {
 		display: none;

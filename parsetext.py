@@ -23,8 +23,22 @@ apportionment_2012 = dict(zip(state_names, apportionment_2012))
 
 def finalize_candidate(district, candidate_string, votes):
 	new_candidate = {"name": "", "party": "", "votes": votes}
-	split_candidate = candidate_string.rsplit(", ", 1)
+
+	# a bunch of ugly code to try to figure out the candidate's party.
+	# this is much harder than you would think
+	if "Don Sherwood" in candidate_string:
+		split_candidate = ["Don Sherwood", "Republican"]
+	elif ", Democrat" in candidate_string:
+		split_candidate = [candidate_string.split(", Democrat")[0], "Democrat"]
+	elif ", Republican" in candidate_string:
+		split_candidate = [candidate_string.split(", Republican")[0], "Republican"]
+	else:
+		split_candidate = candidate_string.rsplit(", ", 1)
 	if len(split_candidate) == 1:
+		if len(district["candidates"]) > 0 and split_candidate[0] != "Blank/Scattering" and split_candidate[0] != "Other" and split_candidate[0] != "Write-in" and split_candidate[0] != "Unenrolled" and split_candidate[0] != "Scattering" and split_candidate[0] != "No Vote Cast" and split_candidate[0] != "Unaffiliated" and split_candidate[0] != "Over Vote" and split_candidate[0] != "Other Candidates" and split_candidate[0] != "Blank/Void/Scattering":
+			# electoral fusion
+			district["candidates"][-1]["votes"] += votes
+			return
 		split_candidate = ["", split_candidate[0]]
 	new_candidate["name"], new_candidate["party"] = split_candidate[0], split_candidate[1]
 	district["candidates"].append(new_candidate)
@@ -47,6 +61,7 @@ def finalize_state(year, state, year_result, state_result):
 		quit()
 	state_result["totalSeats"] = current_apportionment[state]
 	unsorted_parties = {}
+	district_number = 1
 	for district in state_result["districts"]:
 		state_result["totalVotes"] += district["totalVotes"]
 		winner_party = ""
@@ -56,12 +71,14 @@ def finalize_state(year, state, year_result, state_result):
 				winner_party = candidate["party"]
 				winner_votes = candidate["votes"]
 			if candidate["party"] not in unsorted_parties:
-				unsorted_parties[candidate["party"]] = {"name": candidate["party"], "votes": 0, "seats": 0, "expectedSeats": 0}
+				unsorted_parties[candidate["party"]] = {"name": candidate["party"], "votes": 0, "seatCount": 0, "expectedSeats": 0, "seats": []}
 			unsorted_parties[candidate["party"]]["votes"] += candidate["votes"]
-		unsorted_parties[winner_party]["seats"] += 1
+		unsorted_parties[winner_party]["seatCount"] += 1
+		unsorted_parties[winner_party]["seats"].append(district_number)
+		district_number += 1
 	for party in unsorted_parties.values():
 		party["expectedSeats"] = float(party["votes"]) * state_result["totalSeats"] / state_result["totalVotes"]
-	state_result["parties"] = sorted(unsorted_parties.values(), key=operator.itemgetter("seats"), reverse=True)
+	state_result["parties"] = sorted(unsorted_parties.values(), key=lambda party: party["seatCount"] * 1000000000 + party["votes"], reverse=True)
 
 	print("")
 	print("")
@@ -74,21 +91,23 @@ def finalize_state(year, state, year_result, state_result):
 			print("%30s\t%25s\t%d" % (candidate["name"], candidate["party"], candidate["votes"]))
 		i += 1
 
-	year_result["totalVotes"] += state_result["totalVotes"]
 	year_result["states"][state] = state_result
 
 def finalize_year(year, complete_results, year_result):
 	unsorted_parties = {}
-	for state in year_result["states"].values():
-		year_result["totalVotes"] += state_result["totalVotes"]
+	for state_name, state in sorted(year_result["states"].items()):
+		year_result["totalVotes"] += state["totalVotes"]
 		for party in state["parties"]:
 			if party["name"] not in unsorted_parties:
-				unsorted_parties[party["name"]] = {"name": party["name"], "votes": 0, "seats": 0, "expectedSeats": 0}
+				unsorted_parties[party["name"]] = {"name": party["name"], "votes": 0, "seatCount": 0, "expectedSeats": 0, "seats": []}
 			unsorted_parties[party["name"]]["votes"] += party["votes"]
-			unsorted_parties[party["name"]]["seats"] += party["seats"]
+			unsorted_parties[party["name"]]["seatCount"] += party["seatCount"]
+			if len(party["seats"]) > 0:
+				unsorted_parties[party["name"]]["seats"].append((state_name, party["seats"]))
 	for party in unsorted_parties.values():
 		party["expectedSeats"] = float(party["votes"]) * 435 / year_result["totalVotes"]
-	year_result["parties"] = sorted(unsorted_parties.values(), key=operator.itemgetter("seats"), reverse=True)
+
+	year_result["parties"] = sorted(unsorted_parties.values(), key=lambda party: party["seatCount"] * 1000000000 + party["votes"], reverse=True)
 	complete_results[year] = year_result
 
 # handwritten context-sensitive parser ahead, beware!
@@ -167,6 +186,14 @@ for year in range(2000, 2014, 2):
 				state_result["districts"] = state_result["districts"][:-1]
 				state_result["districts"][25] = state_result["districts"][2]
 				state_result["districts"].remove(state_result["districts"][2])
+				state_result["districts"].insert(18, state_result["districts"].pop(0))
+				state_result["districts"].insert(23, state_result["districts"].pop(0))
+				state_result["districts"].insert(25, state_result["districts"].pop(0))
+				state_result["districts"].insert(25, state_result["districts"].pop(0))
+				state_result["districts"].insert(28, state_result["districts"].pop(0))
+			elif year == 2008 and state_names[state_index] == "Louisiana":
+				state_result["districts"][1] = {"totalVotes": 66882, "candidates": [{"name": "William J. Jefferson", "party": "Democrat", "votes": 31318}, {"name": "Anh \"Joseph\" Cao", "party": "Republican", "votes": 33132}, {"name": "Gregory W. Kahn", "party": "Libertarian", "votes": 549}, {"name": "Malik Rahim", "party": "Green", "votes": 1883}]}
+				state_result["districts"][3] = {"totalVotes": 92572, "candidates": [{"name": "Paul J. Carmouche", "party": "Democrat", "votes": 44151}, {"name": "John Fleming", "party": "Republican", "votes": 44501}, {"name": "Chester T. \"Catfish\" Kelley", "party": "No Party Affiliation", "votes": 3245}, {"name": "Gerard J. Bowen, Jr.", "party": "Other", "votes": 675}]}
 
 			finalize_state(year, state_names[state_index], year_result, state_result)
 			state_result = {"totalVotes": 0, "totalSeats": 0, "parties": [], "districts": []}
