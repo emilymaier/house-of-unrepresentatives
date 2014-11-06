@@ -112,7 +112,7 @@ def finalize_year(year, complete_results, year_result):
 
 # handwritten context-sensitive parser ahead, beware!
 complete_results = {}
-for year in range(2000, 2014, 2):
+for year in range(1998, 2014, 2):
 	year_result = {"totalVotes": 0, "parties": [], "states": {}}
 	state_result = {"totalVotes": 0, "totalSeats": 0, "parties": [], "districts": []}
 	district = {"totalVotes": 0, "candidates": []}
@@ -178,7 +178,10 @@ for year in range(2000, 2014, 2):
 			district = {"totalVotes": 0, "candidates": []}
 
 			# special cases for when nothing else will work
-			if year == 2002 and state_names[state_index] == "Louisiana":
+			if year == 1998 and state_names[state_index] == "Texas":
+				state_result["districts"][18] = {"totalVotes": 129428, "candidates": [{"name": "Larry Combest", "party": "Republican", "votes": 108266}, {"name": "Sidney Blankenship", "party": "Democrat", "votes": 21162}]}
+				state_result["districts"].insert(19, {"totalVotes": 79713, "candidates": [{"name": "James Walker", "party": "Republican", "votes": 28347}, {"name": "Charlie Gonzalez", "party": "Democrat", "votes": 50356}, {"name": "Alejandro (Alex) DePena", "party": "Libertarian", "votes": 1010}]})
+			elif year == 2002 and state_names[state_index] == "Louisiana":
 				state_result["districts"] = state_result["districts"][:7]
 				state_result["districts"][4] = {"totalVotes": 172462, "candidates": [{"name": "Lee Fletcher", "party": "Republican", "votes": 85744}, {"name": "Rodney Alexander", "party": "Democrat", "votes": 86718}]}
 			elif year == 2006 and state_names[state_index] == "Texas":
