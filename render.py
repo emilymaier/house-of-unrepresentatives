@@ -22,16 +22,22 @@ def scatter_parties_year(figure, r_expected, r_actual, d_expected, d_actual, fil
 		i += 1
 	r_regression = numpy.poly1d(numpy.polyfit(r_expected, r_actual, 1))
 	d_regression = numpy.poly1d(numpy.polyfit(d_expected, d_actual, 1))
-	pyplot.plot(r_expected, r_regression(r_expected), "r:", figure=figure)
-	pyplot.plot(d_expected, d_regression(d_expected), "b:", figure=figure)
+	min_x = min(r_expected + d_expected)
+	max_x = max(r_expected + d_expected)
+	pyplot.plot([min_x, max_x], r_regression([min_x, max_x]), "r--", figure=figure)
+	pyplot.plot([min_x, max_x], d_regression([min_x, max_x]), "b--", figure=figure)
 
 	output = io.StringIO()
 	figure.savefig(output, format="svg")
 	pyplot.close(figure)
 	tree, xmlid = ElementTree.XMLID(output.getvalue())
+	i = 0
 	for year in range(1998, 2014, 2):
 		r_element = xmlid["r_%d" % year]
 		cloned_r_element = copy.deepcopy(r_element)
+		tooltip = ElementTree.Element("title")
+		tooltip.text = "Republicans — %d\nExpected: %.1f\nActual: %d" % (year, r_expected[i], r_actual[i])
+		cloned_r_element.insert(0, tooltip)
 		r_element.clear()
 		r_element.tag = "a"
 		r_element.set("xlink:href", "/%d" % year)
@@ -40,11 +46,16 @@ def scatter_parties_year(figure, r_expected, r_actual, d_expected, d_actual, fil
 
 		d_element = xmlid["d_%d" % year]
 		cloned_d_element = copy.deepcopy(d_element)
+		tooltip = ElementTree.Element("title")
+		tooltip.text = "Democrats — %d\nExpected: %.1f\nActual: %d" % (year, d_expected[i], d_actual[i])
+		cloned_d_element.insert(0, tooltip)
 		d_element.clear()
 		d_element.tag = "a"
 		d_element.set("xlink:href", "/%d" % year)
 		d_element.set("target", "_top")
 		d_element.insert(0, cloned_d_element)
+
+		i += 1
 	ElementTree.ElementTree(tree).write(filename)
 
 def scatter_parties_state(figure, r_expected, r_actual, d_expected, d_actual, year, filename):
@@ -64,8 +75,10 @@ def scatter_parties_state(figure, r_expected, r_actual, d_expected, d_actual, ye
 			d_actual_list.append(d_actual[state_name])
 	r_regression = numpy.poly1d(numpy.polyfit(r_expected_list, r_actual_list, 1))
 	d_regression = numpy.poly1d(numpy.polyfit(d_expected_list, d_actual_list, 1))
-	pyplot.plot(r_expected_list, r_regression(r_expected_list), "r:", figure=figure)
-	pyplot.plot(d_expected_list, d_regression(d_expected_list), "b:", figure=figure)
+	min_x = min(r_expected_list + d_expected_list)
+	max_x = max(r_expected_list + d_expected_list)
+	pyplot.plot([min_x, max_x], r_regression([min_x, max_x]), "r--", figure=figure)
+	pyplot.plot([min_x, max_x], d_regression([min_x, max_x]), "b--", figure=figure)
 
 	output = io.StringIO()
 	figure.savefig(output, format="svg")
@@ -75,6 +88,9 @@ def scatter_parties_state(figure, r_expected, r_actual, d_expected, d_actual, ye
 		if "r_%s" % state_name in xmlid:
 			r_element = xmlid["r_%s" % state_name]
 			cloned_r_element = copy.deepcopy(r_element)
+			tooltip = ElementTree.Element("title")
+			tooltip.text = "Republicans — %s\nExpected: %.1f\nActual: %d" % (state_name, r_expected[state_name], r_actual[state_name])
+			cloned_r_element.insert(0, tooltip)
 			r_element.clear()
 			r_element.tag = "a"
 			r_element.set("xlink:href", "/%d/%s" % (year, state_name))
@@ -84,6 +100,9 @@ def scatter_parties_state(figure, r_expected, r_actual, d_expected, d_actual, ye
 		if "d_%s" % state_name in xmlid:
 			d_element = xmlid["d_%s" % state_name]
 			cloned_d_element = copy.deepcopy(d_element)
+			tooltip = ElementTree.Element("title")
+			tooltip.text = "Democrats — %s\nExpected: %.1f\nActual: %d" % (state_name, d_expected[state_name], d_actual[state_name])
+			cloned_d_element.insert(0, tooltip)
 			d_element.clear()
 			d_element.tag = "a"
 			d_element.set("xlink:href", "/%d/%s" % (year, state_name))
@@ -96,8 +115,10 @@ def scatter_parties(figure, r_expected, r_actual, d_expected, d_actual, filename
 	pyplot.plot(d_expected, d_actual, "bo", figure=figure, markersize=6.0)
 	r_regression = numpy.poly1d(numpy.polyfit(r_expected, r_actual, 1))
 	d_regression = numpy.poly1d(numpy.polyfit(d_expected, d_actual, 1))
-	pyplot.plot(r_expected, r_regression(r_expected), "r:", figure=figure)
-	pyplot.plot(d_expected, d_regression(d_expected), "d:", figure=figure)
+	min_x = min(r_expected + d_expected)
+	max_x = max(r_expected + d_expected)
+	pyplot.plot([min_x, max_x], r_regression([min_x, max_x]), "r--", figure=figure)
+	pyplot.plot([min_x, max_x], d_regression([min_x, max_x]), "b--", figure=figure)
 	figure.savefig(filename)
 	pyplot.close(figure)
 
