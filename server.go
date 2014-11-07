@@ -32,6 +32,8 @@ type candidateResult struct {
 type districtResult struct {
 	TotalVotes int
 	Candidates []candidateResult
+	Winner     string
+	Margin     float64
 }
 
 type stateResult struct {
@@ -59,6 +61,10 @@ var stateTemplate *template.Template
 
 func templateRenderPercentage(numerator, denominator int) string {
 	return fmt.Sprintf("%.1f%%", float64(numerator*100)/float64(denominator))
+}
+
+func templateFractionToPercentage(fraction float64) string {
+	return fmt.Sprintf("%.1f%%", fraction*100)
 }
 
 func templateRenderDistrict(number int) int {
@@ -145,9 +151,10 @@ func main() {
 	}
 
 	funcMap := template.FuncMap{
-		"renderPercentage": templateRenderPercentage,
-		"renderDistrict":   templateRenderDistrict,
-		"largestPartyDiff": templateLargestPartyDiff,
+		"renderPercentage":     templateRenderPercentage,
+		"fractionToPercentage": templateFractionToPercentage,
+		"renderDistrict":       templateRenderDistrict,
+		"largestPartyDiff":     templateLargestPartyDiff,
 	}
 
 	var err error

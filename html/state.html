@@ -12,7 +12,8 @@
 <h2>Overall Results</h2>
 {{template "stateTable" $stateResult}}
 {{range $number, $district := $stateResult.Districts}}
-	<h2>District {{renderDistrict $number}}</h2>
+	{{$winnerLetter := index $district.Winner 0}}
+	<h2>District {{renderDistrict $number}}: {{printf "%c" $winnerLetter}}+{{fractionToPercentage $district.Margin}}</h2>
 	<table><thead><tr><th>Candidate</th><th>Party</th><th>Votes</th><th>Percentage</th></tr></thead><tbody>
 	{{range $district.Candidates}}
 		<tr><td>{{.Name}}</td><td>{{.Party}}</td><td>{{.Votes}}</td><td>{{renderPercentage .Votes $district.TotalVotes}}</td></tr>

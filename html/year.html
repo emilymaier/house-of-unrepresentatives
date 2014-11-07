@@ -13,6 +13,6 @@
 	<a href=/{{$year}}/{{.}}>{{.}}</a> {{largestPartyDiff $stateResult.Parties}}
 {{end}}
 
-<p><img src="/static/seats_{{$year}}.svg" /></p>
+<p><object data="/static/seats_{{$year}}.svg"></object><object data="/static/margin_{{$year}}.svg"></object></p>
 
 {{template "footer.html" .}}

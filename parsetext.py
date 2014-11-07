@@ -66,13 +66,19 @@ def finalize_state(year, state, year_result, state_result):
 		state_result["totalVotes"] += district["totalVotes"]
 		winner_party = ""
 		winner_votes = 0
+		second_votes = 0
 		for candidate in district["candidates"]:
 			if candidate["votes"] > winner_votes:
 				winner_party = candidate["party"]
+				second_votes = winner_votes
 				winner_votes = candidate["votes"]
+			elif candidate["votes"] > second_votes:
+				second_votes = candidate["votes"]
 			if candidate["party"] not in unsorted_parties:
 				unsorted_parties[candidate["party"]] = {"name": candidate["party"], "votes": 0, "seatCount": 0, "expectedSeats": {"national": 0}, "seats": []}
 			unsorted_parties[candidate["party"]]["votes"] += candidate["votes"]
+		district["winner"] = winner_party
+		district["margin"] = float(winner_votes - second_votes) / district["totalVotes"]
 		unsorted_parties[winner_party]["seatCount"] += 1
 		unsorted_parties[winner_party]["seats"].append(district_number)
 		district_number += 1
@@ -128,7 +134,7 @@ complete_results = {}
 for year in range(1998, 2014, 2):
 	year_result = {"totalVotes": 0, "parties": [], "states": {}}
 	state_result = {"totalVotes": 0, "totalSeats": 0, "parties": [], "districts": []}
-	district = {"totalVotes": 0, "candidates": []}
+	district = {"totalVotes": 0, "candidates": [], "winner": "", "margin": 0}
 	election_soup = bs4.BeautifulSoup(open("temp/" + str(year) + "elections.html", "r"))
 	current_candidate = ""
 	current_line = election_soup.find(text=re.compile("FOR UNITED STATES REPRESENTATIVE")).next_sibling.next_sibling
@@ -145,7 +151,7 @@ for year in range(1998, 2014, 2):
 				if match: # new district
 					if len(district["candidates"]) > 0:
 						finalize_district(state_result, district)
-						district = {"totalVotes": 0, "candidates": []}
+						district = {"totalVotes": 0, "candidates": [], "winner": "", "margin": 0}
 					current_string = match.group(1)
 					current_candidate = current_string
 			else:
