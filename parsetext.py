@@ -12,14 +12,9 @@ config_data = json.loads(json_input.read())
 json_input.close()
 state_names = config_data["states"]
 
-apportionment_1992 = [7, 1, 6, 4, 52, 6, 6, 1, 23, 11, 2, 2, 20, 10, 5, 4, 6, 7, 2, 8, 10, 16, 8, 5, 9, 1, 3, 2, 2, 13, 3, 31, 12, 1, 19, 6, 5, 21, 2, 6, 1, 9, 30, 3, 1, 11, 9, 3, 9, 1]
-apportionment_1992 = dict(zip(state_names, apportionment_1992))
-
-apportionment_2002 = [7, 1, 8, 4, 53, 7, 5, 1, 25, 13, 2, 2, 19, 9, 5, 4, 6, 7, 2, 8, 10, 15, 8, 4, 9, 1, 3, 3, 2, 13, 3, 29, 13, 1, 18, 5, 5, 19, 2, 6, 1, 9, 32, 3, 1, 11, 9, 3, 8, 1]
-apportionment_2002 = dict(zip(state_names, apportionment_2002))
-
-apportionment_2012 = [7, 1, 9, 4, 53, 7, 5, 1, 27, 14, 2, 2, 18, 9, 4, 4, 6, 6, 2, 8, 9, 14, 8, 4, 8, 1, 3, 4, 2, 12, 3, 27, 13, 1, 16, 5, 5, 18, 2, 7, 1, 9, 36, 4, 1, 11, 10, 3, 8, 1]
-apportionment_2012 = dict(zip(state_names, apportionment_2012))
+apportionment_1992 = dict(zip(state_names, config_data["apportionment_1992"]))
+apportionment_2002 = dict(zip(state_names, config_data["apportionment_2002"]))
+apportionment_2012 = dict(zip(state_names, config_data["apportionment_2012"]))
 
 def finalize_candidate(district, candidate_string, votes):
 	new_candidate = {"name": "", "party": "", "votes": votes}

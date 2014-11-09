@@ -10,7 +10,7 @@
 {{template "overallTable" $yearResult}}
 {{range index . "states"}}
 	{{$stateResult := index $yearResult.States .}}
-	<a href=/{{$year}}/{{.}}>{{.}}</a> {{largestPartyDiff $stateResult.Parties}}
+	<a href=/{{$year}}/{{.}}>{{.}}</a> <span class="{{partyBiasClass $stateResult.Parties}}">{{partyBias $stateResult.Parties}}</span>
 {{end}}
 
 <p><object data="/static/seats_{{$year}}.svg"></object><object data="/static/margin_{{$year}}.svg"></object></p>

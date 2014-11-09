@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -71,9 +72,46 @@ func templateRenderDistrict(number int) int {
 	return number + 1
 }
 
-func templateLargestPartyDiff(parties []partyResult) string {
+func templatePartyBias(parties []partyResult) string {
 	largestParty := parties[0]
-	return string(largestParty.Name[0]) + "+" + fmt.Sprintf("%.1f", float64(largestParty.SeatCount)-largestParty.ExpectedSeats.National)
+	return fmt.Sprintf("%c+%.1f", largestParty.Name[0], float64(largestParty.SeatCount)-largestParty.ExpectedSeats.National)
+}
+
+func templatePartyBiasClass(parties []partyResult) string {
+	largestParty := parties[0]
+	if largestParty.Name == "Republican" {
+		return "biasRepublican"
+	}
+	if largestParty.Name == "Democrat" {
+		return "biasDemocrat"
+	}
+	return "biasIndependent"
+}
+
+func templateDistrictMargin(district districtResult) string {
+	return fmt.Sprintf("%c+%.1f%%", district.Winner[0], district.Margin*100)
+}
+
+func templateDistrictMarginClass(district districtResult) string {
+	if district.Winner == "Republican" {
+		return "biasRepublican"
+	}
+	if district.Winner == "Democrat" {
+		return "biasDemocrat"
+	}
+	return "biasIndependent"
+}
+
+func templateDistrictImage(year, state string, district int) string {
+	yearNum, _ := strconv.ParseInt(year, 10, 32)
+	return fmt.Sprintf("%d%s%d.png", (yearNum-1786)/2, state, district+1)
+}
+
+func templateCommaNum(number int) string {
+	if number < 1000 {
+		return fmt.Sprintf("%d", number)
+	}
+	return templateCommaNum(number/1000) + fmt.Sprintf(",%03d", number%1000)
 }
 
 func parseYear(url string) string {
@@ -96,8 +134,9 @@ func parseState(url string) string {
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	err := rootTemplate.Execute(w, map[string]interface{}{
-		"years":  years,
-		"states": states,
+		"years":   years,
+		"states":  states,
+		"results": results,
 	})
 	if err != nil {
 		panic(err.Error())
@@ -154,7 +193,12 @@ func main() {
 		"renderPercentage":     templateRenderPercentage,
 		"fractionToPercentage": templateFractionToPercentage,
 		"renderDistrict":       templateRenderDistrict,
-		"largestPartyDiff":     templateLargestPartyDiff,
+		"partyBias":            templatePartyBias,
+		"partyBiasClass":       templatePartyBiasClass,
+		"districtMargin":       templateDistrictMargin,
+		"districtMarginClass":  templateDistrictMarginClass,
+		"districtImage":        templateDistrictImage,
+		"commaNum":             templateCommaNum,
 	}
 
 	var err error
@@ -182,6 +226,7 @@ func main() {
 
 	http.HandleFunc("/", rootHandler)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
+	http.Handle("/districts/", http.StripPrefix("/districts/", http.FileServer(http.Dir("./districts/"))))
 	for _, year := range years {
 		http.HandleFunc("/"+year, yearHandler)
 		for _, state := range states {

@@ -2,9 +2,12 @@
 
 {{template "sidebar.html" .}}
 
+{{$results := index . "results"}}
+
 <h1>House of Representatives Election Results</h1>
 {{range index . "years"}}
-	<a href=/{{.}}>{{.}}</a>
+{{$yearResult := index $results .}}
+	<a href=/{{.}}>{{.}}</a> <span class="{{partyBiasClass $yearResult.Parties}}">{{partyBias $yearResult.Parties}}</span>
 {{end}}
 
 <p><object data="/static/seats_national.svg"></object><object data="/static/seats_national_without_1.svg"></object><object data="/static/seats_state.svg"></object><object data="/static/seats.svg"></object><object data="/static/margin.svg"></object></p>

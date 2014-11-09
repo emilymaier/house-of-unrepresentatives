@@ -1,15 +1,11 @@
-{{define "resultsTableBottom"}}
-<tr><td>Total</td><td>{{.TotalVotes}}</td></td><td>{{.TotalSeats}}</td><td></td></tr></tbody></table>
-{{end}}
-
 {{define "overallTable"}}
 {{$totalVotes := .TotalVotes}}
 {{$totalSeats := .TotalSeats}}
-<table><thead><tr><th>Party</th><th>Votes</th><th></th><th>Seats</th><th></th><th>Expected Seats (National Popular Vote)</th><th>Expected Seats (National Popular Vote Without 1-District States)</th><th>Expected Seats (State Popular Votes)</th></tr></thead><tbody>
+<table><thead><tr><th>Party</th><th colspan="2">Votes</th><th colspan="2">Seats</th><th>Expected Seats (National Popular Vote)</th><th>Expected Seats (National Popular Vote Without 1-District States)</th><th>Expected Seats (State Popular Votes)</th></tr></thead><tbody>
 {{range .Parties}}
-	<tr><td>{{.Name}}</td><td>{{.Votes}}</td><td>{{renderPercentage .Votes $totalVotes}}</td><td>{{.SeatCount}}</td><td>{{renderPercentage .SeatCount $totalSeats}}</td><td>{{printf "%.1f" .ExpectedSeats.National}}</td><td>{{printf "%.1f" .ExpectedSeats.NationalWithout1}}</td><td>{{printf "%.1f" .ExpectedSeats.State}}</td></tr>
+	<tr><td>{{.Name}}</td><td>{{commaNum .Votes}}</td><td>{{renderPercentage .Votes $totalVotes}}</td><td>{{.SeatCount}}</td><td>{{renderPercentage .SeatCount $totalSeats}}</td><td>{{printf "%.1f" .ExpectedSeats.National}}</td><td>{{printf "%.1f" .ExpectedSeats.NationalWithout1}}</td><td>{{printf "%.1f" .ExpectedSeats.State}}</td></tr>
 	{{if len .Seats}}
-		<tr><td>
+		<tr><td colspan="8">
 		<a href="#hide{{.Name}}" id="hide{{.Name}}" class="hide">+</a>
 		<a href="#show{{.Name}}" id="show{{.Name}}" class="show">–</a>
 		<i>Show seats</i>
@@ -22,17 +18,17 @@
 		</ol></td></tr>
 	{{end}}
 {{end}}
-{{template "resultsTableBottom" .}}
+<tr><td>Total</td><td>{{commaNum .TotalVotes}}</td><td></td><td>{{.TotalSeats}}</td><td></td><td></td><td></td><td></td></tr></tbody></table>
 {{end}}
 
 {{define "stateTable"}}
 {{$totalVotes := .TotalVotes}}
 {{$totalSeats := .TotalSeats}}
-<table><thead><tr><th>Party</th><th>Votes</th><th></th><th>Seats</th><th></th><th>Expected Seats (National)</th></tr></thead><tbody>
+<table><thead><tr><th>Party</th><th colspan="2">Votes</th><th colspan="2">Seats</th><th>Expected Seats (Popular Vote)</th></tr></thead><tbody>
 {{range .Parties}}
-	<tr><td>{{.Name}}</td><td>{{.Votes}}</td><td>{{renderPercentage .Votes $totalVotes}}</td><td>{{.SeatCount}}</td><td>{{renderPercentage .SeatCount $totalSeats}}</td><td>{{printf "%.1f" .ExpectedSeats.National}}</td></tr>
+	<tr><td>{{.Name}}</td><td>{{commaNum .Votes}}</td><td>{{renderPercentage .Votes $totalVotes}}</td><td>{{.SeatCount}}</td><td>{{renderPercentage .SeatCount $totalSeats}}</td><td>{{printf "%.1f" .ExpectedSeats.National}}</td></tr>
 {{end}}
-{{template "resultsTableBottom" .}}
+<tr><td>Total</td><td>{{commaNum .TotalVotes}}</td><td></td><td>{{.TotalSeats}}</td><td></td><td></td></tr></tbody></table>
 {{end}}
 
 <!DOCTYPE html>
@@ -81,6 +77,37 @@
 	.hide, .show {
 		color: #000000;
 		text-decoration: none;
+	}
+	.biasRepublican {
+		color: #ff0000;
+	}
+	.biasDemocrat {
+		color: #0000ff;
+	}
+	.biasIndependent {
+		color: #ffff00;
+	}
+	table {
+		border-spacing: 0px;
+		border-collapse: collapse;
+	}
+	th, td {
+		border: 1px solid #666;
+		border-collapse: collapse;
+		padding: 4px;
+	}
+	th {
+		background: none repeat scroll 0% 0% #DDD;
+		font-weight: bold;
+	}
+	.district table, .district img {
+		display: inline-block;
+		margin-left: auto;
+		margin-right: auto;
+		vertical-align: top;
+	}
+	.district img {
+		width: 600px;
 	}
 </style>
 </head>
