@@ -1,14 +1,14 @@
-{{template "header.html" .}}
-
 {{$year := index . "year"}}
 {{$state := index . "state"}}
 {{$stateResult := index . "stateResult"}}
+
+{{template "header.html" "Results — {{$year}} — {{$state}}"}}
 
 {{template "sidebar.html" .}}
 
 <div>
 <h1>{{$year}} — {{$state}}</h1>
-<a href=/>Home</a> <a href=/{{$year}}>{{$year}}</a>
+<a href="/">Home</a> <a href="/{{$year}}">{{$year}}</a>
 <h2>Overall Results</h2>
 {{template "stateTable" $stateResult}}
 {{range $number, $district := $stateResult.Districts}}

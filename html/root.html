@@ -1,4 +1,4 @@
-{{template "header.html" .}}
+{{template "header.html" "House of Representatives Election Results"}}
 
 {{template "sidebar.html" .}}
 
@@ -7,9 +7,9 @@
 <h1>House of Representatives Election Results</h1>
 {{range index . "years"}}
 {{$yearResult := index $results .}}
-	<a href=/{{.}}>{{.}}</a> <span class="{{partyBiasClass $yearResult.Parties}}">{{partyBias $yearResult.Parties}}</span>
+	<a href="/{{.}}">{{.}}</a> <span class="{{partyBiasClass $yearResult.Parties}}">{{partyBias $yearResult.Parties}}</span>
 {{end}}
 
-<p><object data="/static/seats_national.svg"></object><object data="/static/seats_national_without_1.svg"></object><object data="/static/seats_state.svg"></object><object data="/static/seats.svg"></object><object data="/static/margin.svg"></object></p>
+<p>{{chart "seats_national"}}{{chart "seats_national_without_1"}}{{chart "seats_state"}}{{chart "seats"}}{{chart "margin"}}</p>
 
 {{template "footer.html" .}}

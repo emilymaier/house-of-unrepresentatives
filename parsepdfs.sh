@@ -1,7 +1,7 @@
 #!/bin/bash
 
 mkdir temp/
-mkdir static/
+mkdir charts/
 for f in pdfs/*
 do
 	pdftohtml $f temp/$(basename $f)

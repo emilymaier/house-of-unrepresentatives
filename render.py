@@ -40,8 +40,7 @@ def scatter_parties_year(figure, r_expected, r_actual, d_expected, d_actual, fil
 		cloned_r_element.insert(0, tooltip)
 		r_element.clear()
 		r_element.tag = "a"
-		r_element.set("xlink:href", "/%d" % year)
-		r_element.set("target", "_top")
+		r_element.set("xlink:href", "./%d" % year)
 		r_element.insert(0, cloned_r_element)
 
 		d_element = xmlid["d_%d" % year]
@@ -51,8 +50,7 @@ def scatter_parties_year(figure, r_expected, r_actual, d_expected, d_actual, fil
 		cloned_d_element.insert(0, tooltip)
 		d_element.clear()
 		d_element.tag = "a"
-		d_element.set("xlink:href", "/%d" % year)
-		d_element.set("target", "_top")
+		d_element.set("xlink:href", "./%d" % year)
 		d_element.insert(0, cloned_d_element)
 
 		i += 1
@@ -93,8 +91,7 @@ def scatter_parties_state(figure, r_expected, r_actual, d_expected, d_actual, ye
 			cloned_r_element.insert(0, tooltip)
 			r_element.clear()
 			r_element.tag = "a"
-			r_element.set("xlink:href", "/%d/%s" % (year, state_name))
-			r_element.set("target", "_top")
+			r_element.set("xlink:href", "./%s" % state_name)
 			r_element.insert(0, cloned_r_element)
 
 		if "d_%s" % state_name in xmlid:
@@ -105,8 +102,7 @@ def scatter_parties_state(figure, r_expected, r_actual, d_expected, d_actual, ye
 			cloned_d_element.insert(0, tooltip)
 			d_element.clear()
 			d_element.tag = "a"
-			d_element.set("xlink:href", "/%d/%s" % (year, state_name))
-			d_element.set("target", "_top")
+			d_element.set("xlink:href", "./%s" % state_name)
 			d_element.insert(0, cloned_d_element)
 	ElementTree.ElementTree(tree).write(filename)
 
@@ -141,7 +137,7 @@ for year in range(1998, 2014, 2):
 		elif party["name"] == "Democrat":
 			d_expected.append(party["expectedSeats"]["national"])
 			d_actual.append(party["seatCount"])
-scatter_parties_year(f1, r_expected, r_actual, d_expected, d_actual, "static/seats_national.svg")
+scatter_parties_year(f1, r_expected, r_actual, d_expected, d_actual, "charts/seats_national.svg")
 
 f2 = pyplot.figure()
 f2.suptitle("Actual Versus Expected Seats by Party")
@@ -154,7 +150,7 @@ for year in range(1998, 2014, 2):
 			r_expected.append(party["expectedSeats"]["nationalWithout1"])
 		elif party["name"] == "Democrat":
 			d_expected.append(party["expectedSeats"]["nationalWithout1"])
-scatter_parties_year(f2, r_expected, r_actual, d_expected, d_actual, "static/seats_national_without_1.svg")
+scatter_parties_year(f2, r_expected, r_actual, d_expected, d_actual, "charts/seats_national_without_1.svg")
 
 f3 = pyplot.figure()
 f3.suptitle("Actual Versus Expected Seats by Party")
@@ -167,7 +163,7 @@ for year in range(1998, 2014, 2):
 			r_expected.append(party["expectedSeats"]["state"])
 		elif party["name"] == "Democrat":
 			d_expected.append(party["expectedSeats"]["state"])
-scatter_parties_year(f3, r_expected, r_actual, d_expected, d_actual, "static/seats_state.svg")
+scatter_parties_year(f3, r_expected, r_actual, d_expected, d_actual, "charts/seats_state.svg")
 
 r_expected = []
 r_actual = []
@@ -195,7 +191,7 @@ for year in range(1998, 2014, 2):
 	f_state = pyplot.figure()
 	f_state.suptitle("Actual versus Expected Seats per State by Party — " + str(year))
 	f_state.add_axes([0.1, 0.1, 0.8, 0.8], xlabel="Expected Seats", ylabel="Actual Seats")
-	scatter_parties_state(f_state, r_expected_year, r_actual_year, d_expected_year, d_actual_year, year, "static/seats_" + str(year) + ".svg")
+	scatter_parties_state(f_state, r_expected_year, r_actual_year, d_expected_year, d_actual_year, year, "charts/seats_" + str(year) + ".svg")
 	district_margins = []
 	for state in results[str(year)]["states"].values():
 		for district in state["districts"]:
@@ -220,7 +216,7 @@ for year in range(1998, 2014, 2):
 	if year > 1998:
 		pyplot.figure(f_district.number)
 		pyplot.legend(loc="lower right")
-	f_district.savefig("static/margin_" + str(year) + ".svg")
+	f_district.savefig("charts/margin_" + str(year) + ".svg")
 	pyplot.close(f_district)
 f4 = pyplot.figure()
 f4.suptitle("Vote Margin by District")
@@ -233,9 +229,9 @@ for numbers in all_numbers:
 	year += 2
 pyplot.figure(f4.number)
 pyplot.legend(loc="lower right")
-f4.savefig("static/margin.svg")
+f4.savefig("charts/margin.svg")
 pyplot.close(f4)
 f5 = pyplot.figure()
 f5.suptitle("Actual versus Expected Seats per State by Party")
 f5.add_axes([0.1, 0.1, 0.8, 0.8], xlabel="Expected Seats", ylabel="Actual Seats")
-scatter_parties(f5, r_expected, r_actual, d_expected, d_actual, "static/seats.svg")
+scatter_parties(f5, r_expected, r_actual, d_expected, d_actual, "charts/seats.svg")

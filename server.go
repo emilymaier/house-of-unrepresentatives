@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -114,6 +116,13 @@ func templateCommaNum(number int) string {
 	return templateCommaNum(number/1000) + fmt.Sprintf(",%03d", number%1000)
 }
 
+func templateChart(name string) template.HTML {
+	chartFile, _ := os.Open("charts/" + name + ".svg")
+	chartData, _ := ioutil.ReadAll(chartFile)
+	svgRegex, _ := regexp.Compile("(?s)<svg.*")
+	return template.HTML(svgRegex.Find(chartData))
+}
+
 func parseYear(url string) string {
 	for _, year := range years {
 		if strings.HasPrefix(url, "/"+year) {
@@ -133,6 +142,7 @@ func parseState(url string) string {
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("<?xml version=\"1.0\" encoding=\"utf-8\"?>"))
 	err := rootTemplate.Execute(w, map[string]interface{}{
 		"years":   years,
 		"states":  states,
@@ -144,6 +154,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func yearHandler(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("<?xml version=\"1.0\" encoding=\"utf-8\"?>"))
 	year := parseYear(r.URL.Path)
 	err := yearTemplate.Execute(w, map[string]interface{}{
 		"years":      years,
@@ -157,6 +168,7 @@ func yearHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func stateHandler(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("<?xml version=\"1.0\" encoding=\"utf-8\"?>"))
 	year := parseYear(r.URL.Path)
 	state := parseState(r.URL.Path)
 	err := stateTemplate.Execute(w, map[string]interface{}{
@@ -199,6 +211,7 @@ func main() {
 		"districtMarginClass":  templateDistrictMarginClass,
 		"districtImage":        templateDistrictImage,
 		"commaNum":             templateCommaNum,
+		"chart":                templateChart,
 	}
 
 	var err error
@@ -225,7 +238,6 @@ func main() {
 	}
 
 	http.HandleFunc("/", rootHandler)
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
 	http.Handle("/districts/", http.StripPrefix("/districts/", http.FileServer(http.Dir("./districts/"))))
 	for _, year := range years {
 		http.HandleFunc("/"+year, yearHandler)
