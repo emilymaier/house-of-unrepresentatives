@@ -6,11 +6,11 @@
 {{template "sidebar.html" .}}
 
 <h1>{{$year}}</h1>
-<p><a href="/">Home</a></p>
+<p><a href="{{root}}">Home</a></p>
 {{template "overallTable" $yearResult}}
 {{range index . "states"}}
 	{{$stateResult := index $yearResult.States .}}
-	<a href="/{{$year}}/{{.}}">{{.}}</a> <span class="{{partyBiasClass $stateResult.Parties}}">{{partyBias $stateResult.Parties}}</span>
+	<a href="{{root}}{{$year}}/{{.}}">{{.}}</a> <span class="{{partyBiasClass $stateResult.Parties}}">{{partyBias $stateResult.Parties}}</span>
 {{end}}
 
 <p>{{printf "seats_%s" $year | chart}}{{printf "margin_%s" $year | chart}}</p>

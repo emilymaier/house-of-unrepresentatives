@@ -7,7 +7,7 @@
 <h1>House of Representatives Election Results</h1>
 {{range index . "years"}}
 {{$yearResult := index $results .}}
-	<a href="/{{.}}">{{.}}</a> <span class="{{partyBiasClass $yearResult.Parties}}">{{partyBias $yearResult.Parties}}</span>
+<a href="{{root}}{{.}}">{{.}}</a> <span class="{{partyBiasClass $yearResult.Parties}}">{{partyBias $yearResult.Parties}}</span>
 {{end}}
 
 <p>{{chart "seats_national"}}{{chart "seats_national_without_1"}}{{chart "seats_state"}}{{chart "seats"}}{{chart "margin"}}</p>

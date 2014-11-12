@@ -62,6 +62,8 @@ var rootTemplate *template.Template
 var yearTemplate *template.Template
 var stateTemplate *template.Template
 
+var configData map[string]string
+
 func templateRenderPercentage(numerator, denominator int) string {
 	return fmt.Sprintf("%.1f%%", float64(numerator*100)/float64(denominator))
 }
@@ -121,6 +123,10 @@ func templateChart(name string) template.HTML {
 	chartData, _ := ioutil.ReadAll(chartFile)
 	svgRegex, _ := regexp.Compile("(?s)<svg.*")
 	return template.HTML(svgRegex.Find(chartData))
+}
+
+func templateRoot() string {
+	return configData["root"]
 }
 
 func parseYear(url string) string {
@@ -186,11 +192,17 @@ func stateHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	file, _ := os.Open("stateInfo.json")
 	jsonDecoder := json.NewDecoder(file)
-	configData := make(map[string][]string)
+	countryData := make(map[string][]string)
+	jsonDecoder.Decode(&countryData)
+	file.Close()
+	years = countryData["years"]
+	states = countryData["states"]
+
+	file, _ = os.Open("config.json")
+	jsonDecoder = json.NewDecoder(file)
+	configData = make(map[string]string)
 	jsonDecoder.Decode(&configData)
 	file.Close()
-	years = configData["years"]
-	states = configData["states"]
 
 	file, _ = os.Open("results.json")
 	jsonDecoder = json.NewDecoder(file)
@@ -212,6 +224,7 @@ func main() {
 		"districtImage":        templateDistrictImage,
 		"commaNum":             templateCommaNum,
 		"chart":                templateChart,
+		"root":                 templateRoot,
 	}
 
 	var err error

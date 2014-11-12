@@ -8,7 +8,7 @@
 
 <div>
 <h1>{{$year}} — {{$state}}</h1>
-<a href="/">Home</a> <a href="/{{$year}}">{{$year}}</a>
+<a href="{{root}}">Home</a> <a href="{{root}}{{$year}}">{{$year}}</a>
 <h2>Overall Results</h2>
 {{template "stateTable" $stateResult}}
 {{range $number, $district := $stateResult.Districts}}
@@ -20,7 +20,7 @@
 	{{end}}
 	<tr><td>Total</td><td></td><td>{{commaNum $district.TotalVotes}}</td><td></td></tr>
 	</tbody></table>
-	<img src="/districts/{{districtImage $year $state $number}}" />
+	<img src="{{root}}districts/{{districtImage $year $state $number}}" />
 	</div>
 {{end}}
 </div>

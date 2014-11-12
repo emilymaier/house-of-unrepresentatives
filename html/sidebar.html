@@ -6,10 +6,10 @@
 	<li class="yearList">
 	<a href="#hide{{$listYear}}" id="hide{{$listYear}}" class="hide">+</a>
 	<a href="#show{{$listYear}}" id="show{{$listYear}}" class="show">–</a>
-	<label class="sidebarParent"><a href="/{{$listYear}}">{{$listYear}}</a></label>
+	<label class="sidebarParent"><a href="{{root}}{{$listYear}}">{{$listYear}}</a></label>
 	<ol>
 	{{range $states}}
-		<li class="stateList"><a href="/{{$listYear}}/{{.}}">{{.}}</a></li>
+		<li class="stateList"><a href="{{root}}{{$listYear}}/{{.}}">{{.}}</a></li>
 	{{end}}
 	</ol>
 	</li>
