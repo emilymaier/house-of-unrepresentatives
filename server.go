@@ -111,6 +111,11 @@ func templateDistrictImage(year, state string, district int) string {
 	return fmt.Sprintf("%d%s%d.png", (yearNum-1786)/2, state, district+1)
 }
 
+func templateDistrictImageSmall(year, state string, district int) string {
+	yearNum, _ := strconv.ParseInt(year, 10, 32)
+	return fmt.Sprintf("%d%s%d-small.png", (yearNum-1786)/2, state, district+1)
+}
+
 func templateCommaNum(number int) string {
 	if number < 1000 {
 		return fmt.Sprintf("%d", number)
@@ -222,6 +227,7 @@ func main() {
 		"districtMargin":       templateDistrictMargin,
 		"districtMarginClass":  templateDistrictMarginClass,
 		"districtImage":        templateDistrictImage,
+		"districtImageSmall":   templateDistrictImageSmall,
 		"commaNum":             templateCommaNum,
 		"chart":                templateChart,
 		"root":                 templateRoot,

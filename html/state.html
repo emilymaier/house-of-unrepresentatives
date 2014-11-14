@@ -2,7 +2,8 @@
 {{$state := index . "state"}}
 {{$stateResult := index . "stateResult"}}
 
-{{template "header.html" "Results — {{$year}} — {{$state}}"}}
+{{$title := printf "Results — %s — %s" $year $state}}
+{{template "header.html" $title}}
 
 {{template "sidebar.html" .}}
 
@@ -20,7 +21,7 @@
 	{{end}}
 	<tr><td>Total</td><td></td><td>{{commaNum $district.TotalVotes}}</td><td></td></tr>
 	</tbody></table>
-	<img src="{{root}}districts/{{districtImage $year $state $number}}" />
+	<a href="{{root}}districts/{{districtImage $year $state $number}}"><img src="{{root}}districts/{{districtImageSmall $year $state $number}}" /></a>
 	</div>
 {{end}}
 </div>

@@ -1,7 +1,8 @@
 {{$year := index . "year"}}
 {{$yearResult := index . "yearResult"}}
 
-{{template "header.html" "Results — {{$year}}"}}
+{{$title := printf "Results — %s" $year}}
+{{template "header.html" $title}}
 
 {{template "sidebar.html" .}}
 
