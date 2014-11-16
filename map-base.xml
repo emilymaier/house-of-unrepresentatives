@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Include xmlns:xi="http://www.w3.org/2001/XInclude">
+	<Datasource name="water">
+		<Parameter name="type">postgis</Parameter>
+		<Parameter name="dbname">gis</Parameter>
+		<Parameter name="table">(select wkb_geometry from water where awater >= 500000) multipolygon</Parameter>
+	</Datasource>
+	<Datasource name="road">
+		<Parameter name="type">postgis</Parameter>
+		<Parameter name="dbname">gis</Parameter>
+		<Parameter name="table">(select wkb_geometry, fullname from roads where fullname ~ 'I- \d+') multiline</Parameter>
+	</Datasource>
+	<Datasource name="state">
+		<Parameter name="type">postgis</Parameter>
+		<Parameter name="dbname">gis</Parameter>
+		<Parameter name="table">states</Parameter>
+	</Datasource>
+
+	<Style name="city polygon">
+		<Rule>
+			<PolygonSymbolizer fill="yellow" />
+		</Rule>
+	</Style>
+	<Style name="water">
+		<Rule>
+			<PolygonSymbolizer fill="blue" />
+		</Rule>
+	</Style>
+	<Style name="road line">
+		<Rule>
+			<LineSymbolizer stroke="red" stroke-width="0.8" />
+		</Rule>
+	</Style>
+	<Style name="districts">
+		<Rule>
+			<LineSymbolizer stroke="rgb(50%,50%,50%)" stroke-width="0.3" />
+		</Rule>
+	</Style>
+	<Style name="state boundary">
+		<Rule>
+			<LineSymbolizer stroke="black" stroke-width="0.3" />
+		</Rule>
+	</Style>
+	<Style name="current district">
+		<Rule>
+			<LineSymbolizer stroke="black" stroke-width="2" />
+		</Rule>
+	</Style>
+	<Style name="state label">
+		<Rule>
+			<TextSymbolizer face-name="DejaVu Sans Book" size="22" fill="black" halo-fill="white" halo-radius="3" minimum-padding="10" placement="interior">[name]</TextSymbolizer>
+		</Rule>
+	</Style>
+	<Style name="city label">
+		<Rule>
+			<TextSymbolizer face-name="DejaVu Sans Book" size="13" fill="black" halo-fill="white" halo-radius="2" minimum-padding="10" minimum-distance="10">[name]</TextSymbolizer>
+		</Rule>
+	</Style>
+
+	<Layer name="city polygonss">
+		<Datasource base="place" />
+		<StyleName>city polygon</StyleName>
+	</Layer>
+	<Layer name="water">
+		<Datasource base="water" />
+		<StyleName>water</StyleName>
+	</Layer>
+	<Layer name="road lines">
+		<Datasource base="road" />
+		<StyleName>road line</StyleName>
+	</Layer>
+	<Layer name="districts">
+		<StyleName>districts</StyleName>
+	</Layer>
+	<Layer name="state boundaries">
+		<Datasource base="state" />
+		<StyleName>state boundary</StyleName>
+	</Layer>
+	<Layer name="current district">
+		<StyleName>current district</StyleName>
+	</Layer>
+	<Layer name="state labels">
+		<StyleName>state label</StyleName>
+	</Layer>
+	<Layer name="city labels">
+		<Datasource base="place" />
+		<StyleName>city label</StyleName>
+	</Layer>
+	<Layer name="road labels">
+		<Datasource base="road" />
+		<StyleName>road label</StyleName>
+	</Layer>
+</Include>
