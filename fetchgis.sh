@@ -10,19 +10,30 @@ do
 	wget "ftp://ftp2.census.gov/geo/tiger/TIGER2014/PLACE/$filename" || (echo "failed to fetch TIGER"; exit 1)
 	unzip $filename
 	rm $filename
+	PGCLIENTENCODING="latin1" ogr2ogr -nlt PROMOTE_TO_MULTI -nln places -append -f PostgreSQL PG:"dbname=gis" tl_2014_${fips_state}_place.shp
 	echo "fetch successful, cooling down"
 	sleep 30
 done
+echo "fetching TIGER info for states..."
+wget "ftp://ftp2.census.gov/geo/tiger/TIGER2014/STATE/tl_2014_us_state.zip" || (echo "failed to fetch TIGER"; exit 1)
+unzip tl_2014_us_state.zip
+rm tl_2014_us_state.zip
+ogr2ogr -nlt PROMOTE_TO_MULTI -nln states -f PostgreSQL PG:"dbname=gis" tl_2014_us_state.shp
+psql -c "create materialized view simplified as select ST_Simplify(wkb_geometry, 0.05) as wkb_geometry, name from states" gis
+echo "fetch successful, cooling down"
+sleep 30
 echo "fetching TIGER info for primary roads..."
 wget "ftp://ftp2.census.gov/geo/tiger/TIGER2014/PRIMARYROADS/tl_2014_us_primaryroads.zip" || (echo "failed to fetch TIGER"; exit 1)
 unzip tl_2014_us_primaryroads.zip
 rm tl_2014_us_primaryroads.zip
+PGCLIENTENCODING="latin1" ogr2ogr -nlt PROMOTE_TO_MULTI -nln roads -f PostgreSQL PG:"dbname=gis" tl_2014_us_primaryroads.shp
 echo "fetch successful, cooling down"
 sleep 30
-echo "fetching TIGER info for urban areas..."
-wget "ftp://ftp2.census.gov/geo/tiger/TIGER2014/UAC/tl_2014_us_uac10.zip" || (echo "failed to fetch TIGER"; exit 1)
-unzip tl_2014_us_uac10.zip
-rm tl_2014_us_uac10.zip
+echo "fetching TIGER info for water..."
+wget "ftp://ftp2.census.gov/geo/tiger/TGRGDB14/tlgdb_2014_a_us_areawater.gdb.zip" || (echo "failed to fetch TIGER"; exit 1)
+unzip tlgdb_2014_a_us_areawater.gdb.zip
+rm tlgdb_2014_a_us_areawater.gdb.zip
+PGCLIENTENCODING="latin1" ogr2ogr -nlt PROMOTE_TO_MULTI -nln water -f PostgreSQL PG:"dbname=gis" tlgdb_2014_a_us_areawater.gdb
 echo "fetch successful, cooling down"
 sleep 30
 cd ..
@@ -33,6 +44,7 @@ do
 	wget -T 60 "http://leela.sscnet.ucla.edu/districtShapes/districts${congress}.zip" || (echo "failed to fetch districts"; exit 1)
 	unzip districts${congress}.zip
 	rm districts${congress}.zip
+	ogr2ogr -nlt PROMOTE_TO_MULTI -f PostgreSQL PG:"dbname=gis" districtShapes/districts${congress}.shp
 	echo "fetch successful, cooling down"
 	sleep 30
 done
