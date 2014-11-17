@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Include xmlns:xi="http://www.w3.org/2001/XInclude">
-	<Datasource name="water">
-		<Parameter name="type">postgis</Parameter>
-		<Parameter name="dbname">gis</Parameter>
-		<Parameter name="table">(select wkb_geometry from water where awater >= 500000) multipolygon</Parameter>
+	<Datasource name="raster alaska">
+		<Parameter name="type">gdal</Parameter>
+		<Parameter name="file">USGS/projected-alaska.tif</Parameter>
+	</Datasource>
+	<Datasource name="raster hawaii">
+		<Parameter name="type">gdal</Parameter>
+		<Parameter name="file">USGS/projected-hawaii.tif</Parameter>
+	</Datasource>
+	<Datasource name="raster">
+		<Parameter name="type">gdal</Parameter>
+		<Parameter name="file">USGS/projected.tif</Parameter>
 	</Datasource>
 	<Datasource name="road">
 		<Parameter name="type">postgis</Parameter>
@@ -16,14 +23,24 @@
 		<Parameter name="table">states</Parameter>
 	</Datasource>
 
+	<Style name="raster alaska">
+		<Rule>
+			<RasterSymbolizer scaling="bilinear" />
+		</Rule>
+	</Style>
+	<Style name="raster hawaii">
+		<Rule>
+			<RasterSymbolizer scaling="bilinear" />
+		</Rule>
+	</Style>
+	<Style name="raster">
+		<Rule>
+			<RasterSymbolizer scaling="bilinear" />
+		</Rule>
+	</Style>
 	<Style name="city polygon">
 		<Rule>
 			<PolygonSymbolizer fill="yellow" />
-		</Rule>
-	</Style>
-	<Style name="water">
-		<Rule>
-			<PolygonSymbolizer fill="blue" />
 		</Rule>
 	</Style>
 	<Style name="road line">
@@ -57,13 +74,21 @@
 		</Rule>
 	</Style>
 
-	<Layer name="city polygonss">
+	<Layer name="raster alaska">
+		<Datasource base="raster alaska" />
+		<StyleName>raster alaska</StyleName>
+	</Layer>
+	<Layer name="raster hawaii">
+		<Datasource base="raster hawaii" />
+		<StyleName>raster hawaii</StyleName>
+	</Layer>
+	<Layer name="raster">
+		<Datasource base="raster" />
+		<StyleName>raster</StyleName>
+	</Layer>
+	<Layer name="city polygons">
 		<Datasource base="place" />
 		<StyleName>city polygon</StyleName>
-	</Layer>
-	<Layer name="water">
-		<Datasource base="water" />
-		<StyleName>water</StyleName>
 	</Layer>
 	<Layer name="road lines">
 		<Datasource base="road" />

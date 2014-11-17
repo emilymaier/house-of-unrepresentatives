@@ -29,11 +29,29 @@ rm tl_2014_us_primaryroads.zip
 PGCLIENTENCODING="latin1" ogr2ogr -nlt PROMOTE_TO_MULTI -nln roads -f PostgreSQL PG:"dbname=gis" tl_2014_us_primaryroads.shp
 echo "fetch successful, cooling down"
 sleep 30
-echo "fetching TIGER info for water..."
-wget "ftp://ftp2.census.gov/geo/tiger/TGRGDB14/tlgdb_2014_a_us_areawater.gdb.zip" || (echo "failed to fetch TIGER"; exit 1)
-unzip tlgdb_2014_a_us_areawater.gdb.zip
-rm tlgdb_2014_a_us_areawater.gdb.zip
-PGCLIENTENCODING="latin1" ogr2ogr -nlt PROMOTE_TO_MULTI -nln water -f PostgreSQL PG:"dbname=gis" tlgdb_2014_a_us_areawater.gdb
+cd ..
+
+mkdir USGS/
+cd USGS/
+echo "fetching USGS natural earth raster..."
+wget "http://dds.cr.usgs.gov/pub/data/nationalatlas/nate48i0100a.tif_nt00867.tar.gz"
+tar -xvf nate48i0100a.tif_nt00867.tar.gz
+rm nate48i0100a.tif_nt00867.tar.gz
+gdalwarp -t_srs EPSG:4269 -dstnodata "240, 235, 211" nate48i0100a.tif projected.tif
+echo "fetch successful, cooling down"
+sleep 30
+echo "fetching USGS natural earth alaska raster..."
+wget "http://dds.cr.usgs.gov/pub/data/nationalatlas/nateaki0100a.tif_nt00868.tar.gz"
+tar -xvf nateaki0100a.tif_nt00868.tar.gz
+rm nateaki0100a.tif_nt00868.tar.gz
+gdalwarp -t_srs EPSG:4269 -dstnodata "193, 224, 250" nateaki0100a.tif projected-alaska.tif
+echo "fetch successful, cooling down"
+sleep 30
+echo "fetching USGS natural earth hawaii raster..."
+wget "http://dds.cr.usgs.gov/pub/data/nationalatlas/natehii0100a.tif_nt00869.tar.gz"
+tar -xvf natehii0100a.tif_nt00869.tar.gz
+rm natehii0100a.tif_nt00869.tar.gz
+gdalwarp -t_srs EPSG:4269 natehii0100a.tif projected-hawaii.tif
 echo "fetch successful, cooling down"
 sleep 30
 cd ..

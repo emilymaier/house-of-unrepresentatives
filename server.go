@@ -108,12 +108,12 @@ func templateDistrictMarginClass(district districtResult) string {
 
 func templateDistrictImage(year, state string, district int) string {
 	yearNum, _ := strconv.ParseInt(year, 10, 32)
-	return fmt.Sprintf("%d%s%d.png", (yearNum-1786)/2, state, district+1)
+	return fmt.Sprintf("%d%s%d.jpeg", (yearNum-1786)/2, state, district+1)
 }
 
 func templateDistrictImageSmall(year, state string, district int) string {
 	yearNum, _ := strconv.ParseInt(year, 10, 32)
-	return fmt.Sprintf("%d%s%d-small.png", (yearNum-1786)/2, state, district+1)
+	return fmt.Sprintf("%d%s%d-small.jpeg", (yearNum-1786)/2, state, district+1)
 }
 
 func templateCommaNum(number int) string {
