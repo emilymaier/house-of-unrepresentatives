@@ -3,6 +3,7 @@
 import bs4
 import json
 import operator
+import psycopg2
 import re
 import sys
 import time
@@ -15,6 +16,10 @@ state_names = config_data["states"]
 apportionment_1992 = dict(zip(state_names, config_data["apportionment_1992"]))
 apportionment_2002 = dict(zip(state_names, config_data["apportionment_2002"]))
 apportionment_2012 = dict(zip(state_names, config_data["apportionment_2012"]))
+
+pg_conn = psycopg2.connect(database="gis")
+pg_cursor = pg_conn.cursor()
+pg_cursor.execute("create table results (year integer, state text, district integer, winner text)")
 
 def finalize_candidate(district, candidate_string, votes):
 	new_candidate = {"name": "", "party": "", "votes": votes}
@@ -76,6 +81,7 @@ def finalize_state(year, state, year_result, state_result):
 		district["margin"] = float(winner_votes - second_votes) / district["totalVotes"]
 		unsorted_parties[winner_party]["seatCount"] += 1
 		unsorted_parties[winner_party]["seats"].append(district_number)
+		pg_cursor.execute("insert into results values(%d, '%s', %d, '%s')" % (year, state, district_number, winner_party))
 		district_number += 1
 	for party in unsorted_parties.values():
 		party["expectedSeats"]["national"] = float(party["votes"]) * state_result["totalSeats"] / state_result["totalVotes"]
@@ -236,3 +242,5 @@ for year in range(1998, 2014, 2):
 json_output = open("results.json", "w")
 json_output.write(json.dumps(complete_results))
 json_output.close()
+
+pg_conn.commit()

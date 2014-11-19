@@ -37,7 +37,7 @@ echo "fetching USGS natural earth raster..."
 wget "http://dds.cr.usgs.gov/pub/data/nationalatlas/nate48i0100a.tif_nt00867.tar.gz"
 tar -xvf nate48i0100a.tif_nt00867.tar.gz
 rm nate48i0100a.tif_nt00867.tar.gz
-gdalwarp -t_srs EPSG:4269 -dstnodata "240, 235, 211" nate48i0100a.tif projected.tif
+gdalwarp -t_srs EPSG:4269 -multi -dstalpha nate48i0100a.tif projected.tiff
 echo "fetch successful, cooling down"
 sleep 30
 echo "fetching USGS natural earth alaska raster..."
@@ -66,5 +66,6 @@ do
 	echo "fetch successful, cooling down"
 	sleep 30
 done
+psql -c $'create function parse_district(district text) returns integer as $$\ndeclare\nbegin\nif district::integer = 0 then\nreturn 1;\nend if;\nreturn district::integer;\nend;\n$$ language plpgsql;' gis
 
-mkdir districts/
+mkdir maps/

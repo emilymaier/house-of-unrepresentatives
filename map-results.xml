@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Include xmlns:xi="http://www.w3.org/2001/XInclude">
+	<Style name="districts republican">
+		<Rule>
+			<PolygonSymbolizer fill="red" />
+		</Rule>
+	</Style>
+	<Style name="districts democrat">
+		<Rule>
+			<PolygonSymbolizer fill="blue" />
+		</Rule>
+	</Style>
+	<Style name="districts independent">
+		<Rule>
+			<PolygonSymbolizer fill="yellow" />
+		</Rule>
+	</Style>
+	<Style name="districts">
+		<Rule>
+			<LineSymbolizer stroke="black" stroke-width="0.6" />
+		</Rule>
+	</Style>
+
+	<Layer name="districts republican">
+		<StyleName>districts republican</StyleName>
+		<StyleName>districts</StyleName>
+	</Layer>
+	<Layer name="districts democrat">
+		<StyleName>districts democrat</StyleName>
+		<StyleName>districts</StyleName>
+	</Layer>
+	<Layer name="districts independent">
+		<StyleName>districts independent</StyleName>
+		<StyleName>districts</StyleName>
+	</Layer>
+</Include>

@@ -12,6 +12,7 @@
 <a href="{{root}}">Home</a> <a href="{{root}}{{$year}}">{{$year}}</a>
 <h2>Overall Results</h2>
 {{template "stateTable" $stateResult}}
+<a href="{{root}}{{stateImage $year $state}}"><img src="{{root}}{{stateImageSmall $year $state}}" /></a>
 {{range $number, $district := $stateResult.Districts}}
 	<div class="district">
 	<h2>District {{renderDistrict $number}}: <span class="{{districtMarginClass $district}}">{{districtMargin $district}}</span></h2>
@@ -21,7 +22,7 @@
 	{{end}}
 	<tr><td>Total</td><td></td><td>{{commaNum $district.TotalVotes}}</td><td></td></tr>
 	</tbody></table>
-	<a href="{{root}}districts/{{districtImage $year $state $number}}"><img src="{{root}}districts/{{districtImageSmall $year $state $number}}" /></a>
+	<a href="{{root}}{{districtImage $year $state $number}}"><img src="{{root}}{{districtImageSmall $year $state $number}}" /></a>
 	</div>
 {{end}}
 </div>

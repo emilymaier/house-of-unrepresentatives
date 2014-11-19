@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Map xmlns:xi="http://www.w3.org/2001/XInclude" background-color="white">
+<Map xmlns:xi="http://www.w3.org/2001/XInclude" background-color="rgb(193,224,250)">
 	<Datasource name="place">
 		<Parameter name="type">postgis</Parameter>
 		<Parameter name="dbname">gis</Parameter>
@@ -10,5 +10,5 @@
 			<ShieldSymbolizer face-name="DejaVu Sans Book" size="12" fill="white" file="I-blank.svg" minimum-padding="300" minimum-distance="300" transform="scale(0.04)">[fullname].replace('I- ', '')</ShieldSymbolizer>
 		</Rule>
 	</Style>
-	<xi:include href="map-base.xml" />
+	<xi:include href="map-district-base.xml" />
 </Map>

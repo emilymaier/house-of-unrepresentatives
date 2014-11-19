@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Map xmlns:xi="http://www.w3.org/2001/XInclude" background-color="rgb(193,224,250)">
+	<xi:include href="map-state-base.xml" />
+</Map>

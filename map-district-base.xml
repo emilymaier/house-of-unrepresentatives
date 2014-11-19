@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Include xmlns:xi="http://www.w3.org/2001/XInclude">
+	<xi:include href="map-base.xml" xpointer="xpointer(/Include/*[1])" />
+	<Datasource name="road">
+		<Parameter name="type">postgis</Parameter>
+		<Parameter name="dbname">gis</Parameter>
+		<Parameter name="table">(select wkb_geometry, fullname from roads where fullname ~ 'I- \d+') multiline</Parameter>
+	</Datasource>
+	<xi:include href="map-base.xml" xpointer="xpointer(/Include/*[2])" />
+
+	<Style name="districts">
+		<Rule>
+			<LineSymbolizer stroke="rgb(50%,50%,50%)" stroke-width="0.3" />
+		</Rule>
+	</Style>
+	<Style name="current district">
+		<Rule>
+			<LineSymbolizer stroke="black" stroke-width="2" />
+		</Rule>
+	</Style>
+	<Style name="road line">
+		<Rule>
+			<LineSymbolizer stroke="red" stroke-width="0.8" />
+		</Rule>
+	</Style>
+
+	<Layer name="districts">
+		<StyleName>districts</StyleName>
+	</Layer>
+	<Layer name="road lines">
+		<Datasource base="road" />
+		<StyleName>road line</StyleName>
+	</Layer>
+	<xi:include href="map-base.xml" xpointer="xpointer(/Include/*[3])" />
+	<Layer name="current district">
+		<StyleName>current district</StyleName>
+	</Layer>
+	<xi:include href="map-base.xml" xpointer="xpointer(/Include/*[4])" />
+	<Layer name="road labels">
+		<Datasource base="road" />
+		<StyleName>road label</StyleName>
+	</Layer>
+</Include>

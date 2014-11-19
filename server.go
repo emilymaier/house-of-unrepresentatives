@@ -106,14 +106,34 @@ func templateDistrictMarginClass(district districtResult) string {
 	return "biasIndependent"
 }
 
+func templateYearImage(year string) string {
+	yearNum, _ := strconv.ParseInt(year, 10, 32)
+	return fmt.Sprintf("maps/%d.jpeg", (yearNum-1786)/2)
+}
+
+func templateYearImageSmall(year string) string {
+	yearNum, _ := strconv.ParseInt(year, 10, 32)
+	return fmt.Sprintf("maps/%d-small.jpeg", (yearNum-1786)/2)
+}
+
+func templateStateImage(year, state string) string {
+	yearNum, _ := strconv.ParseInt(year, 10, 32)
+	return fmt.Sprintf("maps/%d%s.jpeg", (yearNum-1786)/2, state)
+}
+
+func templateStateImageSmall(year, state string) string {
+	yearNum, _ := strconv.ParseInt(year, 10, 32)
+	return fmt.Sprintf("maps/%d%s-small.jpeg", (yearNum-1786)/2, state)
+}
+
 func templateDistrictImage(year, state string, district int) string {
 	yearNum, _ := strconv.ParseInt(year, 10, 32)
-	return fmt.Sprintf("%d%s%d.jpeg", (yearNum-1786)/2, state, district+1)
+	return fmt.Sprintf("maps/%d%s%d.jpeg", (yearNum-1786)/2, state, district+1)
 }
 
 func templateDistrictImageSmall(year, state string, district int) string {
 	yearNum, _ := strconv.ParseInt(year, 10, 32)
-	return fmt.Sprintf("%d%s%d-small.jpeg", (yearNum-1786)/2, state, district+1)
+	return fmt.Sprintf("maps/%d%s%d-small.jpeg", (yearNum-1786)/2, state, district+1)
 }
 
 func templateCommaNum(number int) string {
@@ -226,6 +246,10 @@ func main() {
 		"partyBiasClass":       templatePartyBiasClass,
 		"districtMargin":       templateDistrictMargin,
 		"districtMarginClass":  templateDistrictMarginClass,
+		"yearImage":            templateYearImage,
+		"yearImageSmall":       templateYearImageSmall,
+		"stateImage":           templateStateImage,
+		"stateImageSmall":      templateStateImageSmall,
 		"districtImage":        templateDistrictImage,
 		"districtImageSmall":   templateDistrictImageSmall,
 		"commaNum":             templateCommaNum,
@@ -257,7 +281,7 @@ func main() {
 	}
 
 	http.HandleFunc("/", rootHandler)
-	http.Handle("/districts/", http.StripPrefix("/districts/", http.FileServer(http.Dir("./districts/"))))
+	http.Handle("/maps/", http.StripPrefix("/maps/", http.FileServer(http.Dir("./maps/"))))
 	for _, year := range years {
 		http.HandleFunc("/"+year, yearHandler)
 		for _, state := range states {

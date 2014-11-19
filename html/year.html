@@ -14,6 +14,6 @@
 	<a href="{{root}}{{$year}}/{{.}}">{{.}}</a> <span class="{{partyBiasClass $stateResult.Parties}}">{{partyBias $stateResult.Parties}}</span>
 {{end}}
 
-<p>{{printf "seats_%s" $year | chart}}{{printf "margin_%s" $year | chart}}</p>
+<p><a href="{{root}}{{yearImage $year}}"><img src="{{root}}{{yearImageSmall $year}}" /></a>{{printf "seats_%s" $year | chart}}{{printf "margin_%s" $year | chart}}</p>
 
 {{template "footer.html" .}}
