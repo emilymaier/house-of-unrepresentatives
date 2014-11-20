@@ -1,4 +1,7 @@
 #!/usr/bin/python
+# coding=utf8
+# Copyright © 2014 Emily Maier
+# Generates the maps of districts and election results.
 
 import json
 import mapnik
@@ -7,6 +10,7 @@ import ppygis
 import psycopg2
 import sys
 
+# Set the correct bounding box for Alaska.
 def normalize_alaska(bbox):
 	bbox.rings[0].points[0].x = float(-163.5)
 	bbox.rings[0].points[0].y = float(52.5)
@@ -14,6 +18,7 @@ def normalize_alaska(bbox):
 	bbox.rings[0].points[2].y = float(71.5)
 	return bbox
 
+# Set the correct bounding box for Hawaii (and its 2nd district).
 def normalize_hawaii(bbox):
 	bbox.rings[0].points[0].x = float(-160.5)
 	bbox.rings[0].points[0].y = float(18.75)
@@ -21,14 +26,15 @@ def normalize_hawaii(bbox):
 	bbox.rings[0].points[2].y = float(22.5)
 	return bbox
 
+# Prevent the aspect ratio of the map from exceeding the golden ratio.
 def normalize_ratio(ratio):
-	# golden ratio
 	if ratio > 1.272:
 		return 1.272
 	if ratio < 0.786:
 		return 0.786
 	return ratio
 
+# Finds the layer with the given name in the map and returns its index.
 def layer_index(map, name):
 	for index in range(len(map.layers)):
 		if map.layers[index].name == name:
@@ -40,15 +46,17 @@ config_data = json.loads(json_input.read())
 json_input.close()
 state_fips = dict(zip(config_data["states"], config_data["fips"]))
 
+# Subprocess that generates district and state maps. Receives tasks giving a
+# state and election year to generate.
 def map_thread(queue):
 	map_state_small = mapnik.Map(600, 600)
-	mapnik.load_map(map_state_small, "map-state-small.xml")
+	mapnik.load_map(map_state_small, "map-config/state-small.xml")
 	map_state_large = mapnik.Map(2000, 2000)
-	mapnik.load_map(map_state_large, "map-state-large.xml")
+	mapnik.load_map(map_state_large, "map-config/state-large.xml")
 	map_small = mapnik.Map(600, 600)
-	mapnik.load_map(map_small, "map-district-small.xml")
+	mapnik.load_map(map_small, "map-config/district-small.xml")
 	map_large = mapnik.Map(2000, 2000)
-	mapnik.load_map(map_large, "map-district-large.xml")
+	mapnik.load_map(map_large, "map-config/district-large.xml")
 
 	pg_conn = psycopg2.connect(database="gis")
 	pg_cursor = pg_conn.cursor()
@@ -62,6 +70,7 @@ def map_thread(queue):
 		if quit:
 			sys.exit(0)
 
+		# set the datasources needed for this state
 		districts_datasource = mapnik.PostGIS(dbname="gis", table="(select * from districts%d join results on parse_district(districts%d.district) = results.district and districts%d.statename = '%s' and results.year = %d and results.state = '%s' and results.winner = 'Republican') multipolygon" % (congress, congress, congress, state, congress * 2 + 1786, state))
 		dr_index = layer_index(map_state_small, "districts republican")
 		map_state_small.layers[dr_index].datasource = districts_datasource
@@ -91,6 +100,7 @@ def map_thread(queue):
 		cl_index = layer_index(map_state_small, "city labels")
 		map_state_small.layers[cl_index].datasource = place_datasource
 
+		# generate the state maps
 		pg_cursor.execute("select ST_Envelope(wkb_geometry) from states where name = '%s'" % state)
 		pg_record = pg_cursor.fetchone()
 		pg_conn.rollback()
@@ -109,7 +119,7 @@ def map_thread(queue):
 		map_state_small.zoom_to_box(mapnik.Box2d(state_bbox.rings[0].points[0].x, state_bbox.rings[0].points[0].y, state_bbox.rings[0].points[2].x, state_bbox.rings[0].points[2].y))
 		if state != "Alaska" and state != "Hawaii":
 			map_state_small.zoom(-1.5)
-		filename = "maps/%d%s-small.jpeg" % (congress, str(state))
+		filename = "/var/lib/house/%d%s-small.jpeg" % (congress, str(state))
 		mapnik.render_to_file(map_state_small, filename, "jpeg")
 		print filename
 
@@ -117,7 +127,7 @@ def map_thread(queue):
 		map_state_large.zoom_to_box(mapnik.Box2d(state_bbox.rings[0].points[0].x, state_bbox.rings[0].points[0].y, state_bbox.rings[0].points[2].x, state_bbox.rings[0].points[2].y))
 		if state != "Alaska" and state != "Hawaii":
 			map_state_large.zoom(-1.5)
-		filename = "maps/%d%s.jpeg" % (congress, str(state))
+		filename = "/var/lib/house/%d%s.jpeg" % (congress, str(state))
 		mapnik.render_to_file(map_state_large, filename, "jpeg")
 		print filename
 
@@ -159,7 +169,7 @@ def map_thread(queue):
 				map_small.zoom(-1.5)
 			if map_small.scale() < 0.0006:
 				map_small.zoom(-0.0006 / map_small.scale())
-			filename = "maps/%d%s%d-small.jpeg" % (congress, str(state), district)
+			filename = "/var/lib/house/%d%s%d-small.jpeg" % (congress, str(state), district)
 			mapnik.render_to_file(map_small, filename, "jpeg")
 			print filename
 
@@ -169,15 +179,15 @@ def map_thread(queue):
 				map_large.zoom(-1.5)
 			if map_large.scale() < 0.0006:
 				map_large.zoom(-0.0006 / map_large.scale())
-			filename = "maps/%d%s%d.jpeg" % (congress, str(state), district)
+			filename = "/var/lib/house/%d%s%d.jpeg" % (congress, str(state), district)
 			mapnik.render_to_file(map_large, filename, "jpeg")
 			print filename
 
 national_ratio = 1.525
 map_national_small = mapnik.Map(int(600 * national_ratio), int(600 / national_ratio))
-mapnik.load_map(map_national_small, "map-national.xml")
+mapnik.load_map(map_national_small, "map-config/national.xml")
 map_national_large = mapnik.Map(int(2000 * national_ratio), int(2000 / national_ratio))
-mapnik.load_map(map_national_large, "map-national.xml")
+mapnik.load_map(map_national_large, "map-config/national.xml")
 national_box = mapnik.Box2d(-125, 29, -66.5, 45)
 map_national_small.zoom_to_box(national_box)
 map_national_large.zoom_to_box(national_box)
@@ -201,6 +211,7 @@ for congress in range(106, 114):
 		i += 1
 		queue.put((congress, state, district_count, False))
 
+	# the main process generates the national maps itself
 	districts_datasource = mapnik.PostGIS(dbname="gis", table="(select * from districts%d join results on parse_district(districts%d.district) = results.district and districts%d.statename = results.state and results.year = %d and results.winner = 'Republican') multipolygon" % (congress, congress, congress, congress * 2 + 1786))
 	dr_index = layer_index(map_national_small, "districts republican")
 	map_national_small.layers[dr_index].datasource = districts_datasource
@@ -213,12 +224,13 @@ for congress in range(106, 114):
 	di_index = layer_index(map_national_small, "districts independent")
 	map_national_small.layers[di_index].datasource = districts_datasource
 	map_national_large.layers[di_index].datasource = districts_datasource
-	filename = "maps/%d-small.jpeg" % congress
+	filename = "/var/lib/house/%d-small.jpeg" % congress
 	mapnik.render_to_file(map_national_small, filename)
 	print filename
-	filename = "maps/%s.jpeg" % congress
+	filename = "/var/lib/house/%s.jpeg" % congress
 	mapnik.render_to_file(map_national_large, filename)
 	print filename
 
+# kill the subprocesses
 for i in range(4):
 	queue.put((0, "", 0, True))

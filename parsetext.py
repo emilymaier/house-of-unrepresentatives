@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+# Copyright © 2014 Emily Maier
+# Generates results.json that holds all of the extracted election data.
 
 import bs4
 import json
@@ -21,6 +23,7 @@ pg_conn = psycopg2.connect(database="gis")
 pg_cursor = pg_conn.cursor()
 pg_cursor.execute("create table results (year integer, state text, district integer, winner text)")
 
+# Add a (possibly) new candidate to this district.
 def finalize_candidate(district, candidate_string, votes):
 	new_candidate = {"name": "", "party": "", "votes": votes}
 
@@ -43,11 +46,15 @@ def finalize_candidate(district, candidate_string, votes):
 	new_candidate["name"], new_candidate["party"] = split_candidate[0], split_candidate[1]
 	district["candidates"].append(new_candidate)
 
+# Finish processing this district and add it to the state results.
 def finalize_district(state_result, district):
 	for candidate in district["candidates"]:
 		district["totalVotes"] += candidate["votes"]
 	state_result["districts"].append(district)
 
+# Verify that the correct number of districts have been parsed for this state,
+# performs per-party calculations for the state's overall results, and add it
+# all to the national results.
 def finalize_state(year, state, year_result, state_result):
 	if year >= 1992 and year < 2002:
 		current_apportionment = apportionment_1992
@@ -100,6 +107,7 @@ def finalize_state(year, state, year_result, state_result):
 
 	year_result["states"][state] = state_result
 
+# Calculates the national results for this election.
 def finalize_year(year, complete_results, year_result):
 	unsorted_parties = {}
 	for state_name, state in sorted(year_result["states"].items()):

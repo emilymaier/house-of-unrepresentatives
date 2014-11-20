@@ -1,4 +1,8 @@
 #!/bin/bash
+# Copyright © 2014 Emily Maier
+# Fetches and processes the GIS data needed to build the maps. Vector data is
+# inserted into the PostGIS database, while raster data is converted to the
+# EPSG:4269 projection.
 
 mkdir TIGER
 cd TIGER

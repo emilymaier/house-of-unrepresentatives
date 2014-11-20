@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+Copyright © 2014 Emily Maier
+Common config for the large and small individual district maps.
+-->
 <Include xmlns:xi="http://www.w3.org/2001/XInclude">
-	<xi:include href="map-base.xml" xpointer="xpointer(/Include/*[1])" />
+	<xi:include href="base.xml" xpointer="xpointer(/Include/*[1])" />
 	<Datasource name="road">
 		<Parameter name="type">postgis</Parameter>
 		<Parameter name="dbname">gis</Parameter>
 		<Parameter name="table">(select wkb_geometry, fullname from roads where fullname ~ 'I- \d+') multiline</Parameter>
 	</Datasource>
-	<xi:include href="map-base.xml" xpointer="xpointer(/Include/*[2])" />
+	<xi:include href="base.xml" xpointer="xpointer(/Include/*[2])" />
 
 	<Style name="districts">
 		<Rule>
@@ -31,11 +35,11 @@
 		<Datasource base="road" />
 		<StyleName>road line</StyleName>
 	</Layer>
-	<xi:include href="map-base.xml" xpointer="xpointer(/Include/*[3])" />
+	<xi:include href="base.xml" xpointer="xpointer(/Include/*[3])" />
 	<Layer name="current district">
 		<StyleName>current district</StyleName>
 	</Layer>
-	<xi:include href="map-base.xml" xpointer="xpointer(/Include/*[4])" />
+	<xi:include href="base.xml" xpointer="xpointer(/Include/*[4])" />
 	<Layer name="road labels">
 		<Datasource base="road" />
 		<StyleName>road label</StyleName>

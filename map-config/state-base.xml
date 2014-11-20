@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Copyright © 2014 Emily Maier
+Common config for both the large and small state maps.
+-->
+<Include xmlns:xi="http://www.w3.org/2001/XInclude">
+	<Datasource name="place">
+		<Parameter name="type">postgis</Parameter>
+		<Parameter name="dbname">gis</Parameter>
+		<Parameter name="table">(select wkb_geometry, name from places where pcicbsa = 'Y' order by aland desc) multipolygon</Parameter>
+	</Datasource>
+
+	<xi:include href="base.xml" xpointer="xpointer(/Include/*[1])" />
+	<xi:include href="results.xml" />
+	<xi:include href="base.xml" xpointer="xpointer(/Include/*[2])" />
+	<xi:include href="base.xml" xpointer="xpointer(/Include/*[3])" />
+	<xi:include href="base.xml" xpointer="xpointer(/Include/*[4])" />
+</Include>

@@ -1,4 +1,7 @@
 #!/bin/bash
+# Copyright © 2014 Emily Maier
+# Fetches the PDFs from the House of Representatives clerk's website that the
+# election results will eventually be extracted from.
 
 mkdir pdfs
 cd pdfs

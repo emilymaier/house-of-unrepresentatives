@@ -1,3 +1,8 @@
+// Copyright © 2014 Emily Maier
+
+/*
+The HTTP server that serves the results website.
+*/
 package main
 
 import (
@@ -144,7 +149,7 @@ func templateCommaNum(number int) string {
 }
 
 func templateChart(name string) template.HTML {
-	chartFile, _ := os.Open("charts/" + name + ".svg")
+	chartFile, _ := os.Open("/var/lib/house/" + name + ".svg")
 	chartData, _ := ioutil.ReadAll(chartFile)
 	svgRegex, _ := regexp.Compile("(?s)<svg.*")
 	return template.HTML(svgRegex.Find(chartData))
@@ -281,7 +286,8 @@ func main() {
 	}
 
 	http.HandleFunc("/", rootHandler)
-	http.Handle("/maps/", http.StripPrefix("/maps/", http.FileServer(http.Dir("./maps/"))))
+	http.Handle("/charts/", http.StripPrefix("/charts/", http.FileServer(http.Dir("/var/lib/house/"))))
+	http.Handle("/maps/", http.StripPrefix("/maps/", http.FileServer(http.Dir("/var/lib/house/"))))
 	for _, year := range years {
 		http.HandleFunc("/"+year, yearHandler)
 		for _, state := range states {

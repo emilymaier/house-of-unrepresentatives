@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Copyright © 2014 Emily Maier
+Single configuration for both large and small national maps.
+-->
+<Map xmlns:xi="http://www.w3.org/2001/XInclude" background-color="rgb(193,224,250)">
+	<xi:include href="base.xml" xpointer="xpointer(/Include/*[1])" />
+	<xi:include href="results.xml" />
+</Map>

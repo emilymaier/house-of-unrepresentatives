@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+Copyright © 2014 Emily Maier
+Styles and layers to generate districts colored in with election results. Used
+by both the state and national maps.
+-->
 <Include xmlns:xi="http://www.w3.org/2001/XInclude">
 	<Style name="districts republican">
 		<Rule>
