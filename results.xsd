@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema">
+	<complexType name="expectedSeatsType">
+		<attribute name="national" type="float" use="required" />
+		<attribute name="nationalWithout1" type="float" use="required" />
+		<attribute name="state" type="float" use="required" />
+	</complexType>
+
+	<complexType name="seatType">
+		<attribute name="state" type="string" />
+		<attribute name="districts" type="int" />
+	</complexType>
+
+	<complexType name="partyType">
+		<sequence>
+			<element name="expectedSeats" type="expectedSeatsType" />
+			<element name="seat" type="seatType" maxOccurs="unbounded" />
+		</sequence>
+		<attribute name="name" type="string" use="required" />
+		<attribute name="votes" type="int" use="required" />
+		<attribute name="seatCount" type="int" use="required" />
+	</complexType>
+
+	<complexType name="candidateType">
+		<attribute name="name" type="string" use="required" />
+		<attribute name="party" type="string" use="required" />
+		<attribute name="votes" type="int" use="required" />
+	</complexType>
+
+	<complexType name="districtType">
+		<sequence>
+			<element name="candidate" type="candidateType" maxOccurs="unbounded" />
+		</sequence>
+		<attribute name="totalVotes" type="int" use="required" />
+		<attribute name="winner" type="string" use="required" />
+		<attribute name="margin" type="float" use="required" />
+	</complexType>
+
+	<complexType name="stateType">
+		<sequence>
+			<element name="party" type="partyType" maxOccurs="unbounded" />
+			<element name="district" type="districtType" maxOccurs="unbounded" />
+		</sequence>
+		<attribute name="name" type="string" use="required" />
+		<attribute name="totalVotes" type="int" use="required" />
+		<attribute name="totalSeats" type="int" use="required" />
+	</complexType>
+
+	<complexType name="yearType">
+		<sequence>
+			<element name="party" type="partyType" maxOccurs="unbounded" />
+			<element name="state" type="stateType" minOccurs="50" maxOccurs="50" />
+		</sequence>
+		<attribute name="year" type="int" use="required" />
+		<attribute name="totalVotes" type="int" use="required" />
+		<attribute name="totalSeats" type="int" use="required" />
+	</complexType>
+
+	<element name="results">
+		<complexType>
+			<sequence>
+				<element name="year" type="yearType" minOccurs="0" maxOccurs="unbounded" />
+			</sequence>
+		</complexType>
+	</element>
+</schema>

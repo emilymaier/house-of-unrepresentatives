@@ -9,6 +9,7 @@ import psycopg2
 import re
 import sys
 import time
+from xml.etree import ElementTree
 
 json_input = open("stateInfo.json", "r")
 config_data = json.loads(json_input.read())
@@ -246,6 +247,18 @@ for year in range(1998, 2014, 2):
 				current_line = current_line.next_sibling
 			current_line = current_line.next_sibling.next_sibling
 	finalize_year(year, complete_results, year_result)
+
+xml_tree = ElementTree.ElementTree(ElementTree.Element("results"))
+xml_results = xml_tree.getroot()
+for year_number, year_results in complete_results.items():
+	xml_year = ElementTree.element("year", {"year": year_number, "totalVotes": year_results.total_votes, "totalSeats": 435})
+		for party in year_results.parties:
+			xml_party = ElementTree.element("party", {"name": party.name, "votes": party.votes, "seatCount": party.seatCount})
+			xml_year.append(xml_party)
+		for state in year_results.states:
+			xml_state = ElementTree.element("state", {"name": state.name, "totalVotes": state.total_votes, "totalSeats": state.total_seats})
+			xml_year.append(xml_state)
+	xml_results.append(xml_year)
 
 json_output = open("results.json", "w")
 json_output.write(json.dumps(complete_results))
