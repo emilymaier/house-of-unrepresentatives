@@ -119,7 +119,7 @@ def map_thread(queue):
 		map_state_small.zoom_to_box(mapnik.Box2d(state_bbox.rings[0].points[0].x, state_bbox.rings[0].points[0].y, state_bbox.rings[0].points[2].x, state_bbox.rings[0].points[2].y))
 		if state != "Alaska" and state != "Hawaii":
 			map_state_small.zoom(-1.5)
-		filename = "/var/lib/house/%d%s-small.jpeg" % (congress, str(state))
+		filename = "/var/lib/house/output/%d%s-small.jpeg" % (congress, str(state))
 		mapnik.render_to_file(map_state_small, filename, "jpeg")
 		print filename
 
@@ -127,7 +127,7 @@ def map_thread(queue):
 		map_state_large.zoom_to_box(mapnik.Box2d(state_bbox.rings[0].points[0].x, state_bbox.rings[0].points[0].y, state_bbox.rings[0].points[2].x, state_bbox.rings[0].points[2].y))
 		if state != "Alaska" and state != "Hawaii":
 			map_state_large.zoom(-1.5)
-		filename = "/var/lib/house/%d%s.jpeg" % (congress, str(state))
+		filename = "/var/lib/house/output/%d%s.jpeg" % (congress, str(state))
 		mapnik.render_to_file(map_state_large, filename, "jpeg")
 		print filename
 
@@ -169,7 +169,7 @@ def map_thread(queue):
 				map_small.zoom(-1.5)
 			if map_small.scale() < 0.0006:
 				map_small.zoom(-0.0006 / map_small.scale())
-			filename = "/var/lib/house/%d%s%d-small.jpeg" % (congress, str(state), district)
+			filename = "/var/lib/house/output/%d%s%d-small.jpeg" % (congress, str(state), district)
 			mapnik.render_to_file(map_small, filename, "jpeg")
 			print filename
 
@@ -179,7 +179,7 @@ def map_thread(queue):
 				map_large.zoom(-1.5)
 			if map_large.scale() < 0.0006:
 				map_large.zoom(-0.0006 / map_large.scale())
-			filename = "/var/lib/house/%d%s%d.jpeg" % (congress, str(state), district)
+			filename = "/var/lib/house/output/%d%s%d.jpeg" % (congress, str(state), district)
 			mapnik.render_to_file(map_large, filename, "jpeg")
 			print filename
 
@@ -224,10 +224,10 @@ for congress in range(106, 114):
 	di_index = layer_index(map_national_small, "districts independent")
 	map_national_small.layers[di_index].datasource = districts_datasource
 	map_national_large.layers[di_index].datasource = districts_datasource
-	filename = "/var/lib/house/%d-small.jpeg" % congress
+	filename = "/var/lib/house/output/%d-small.jpeg" % congress
 	mapnik.render_to_file(map_national_small, filename)
 	print filename
-	filename = "/var/lib/house/%s.jpeg" % congress
+	filename = "/var/lib/house/output/%s.jpeg" % congress
 	mapnik.render_to_file(map_national_large, filename)
 	print filename
 
