@@ -7,15 +7,15 @@ Base styles and layers used by all of the maps.
 	<Include>
 		<Datasource name="raster alaska">
 			<Parameter name="type">gdal</Parameter>
-			<Parameter name="file">../USGS/projected-alaska.tif</Parameter>
+			<Parameter name="file">/var/lib/house/input/projected-alaska.tif</Parameter>
 		</Datasource>
 		<Datasource name="raster hawaii">
 			<Parameter name="type">gdal</Parameter>
-			<Parameter name="file">../USGS/projected-hawaii.tif</Parameter>
+			<Parameter name="file">/var/lib/house/input/projected-hawaii.tif</Parameter>
 		</Datasource>
 		<Datasource name="raster">
 			<Parameter name="type">gdal</Parameter>
-			<Parameter name="file">../USGS/projected.tiff</Parameter>
+			<Parameter name="file">/var/lib/house/input/projected.tiff</Parameter>
 		</Datasource>
 
 		<Style name="raster alaska">

@@ -5,13 +5,14 @@
 import bs4
 import json
 import operator
+import os
 import psycopg2
 import re
 import sys
 import time
 from xml.etree import ElementTree
 
-json_input = open("stateInfo.json", "r")
+json_input = open(os.path.dirname(os.path.realpath(__file__)) + "/stateInfo.json", "r")
 config_data = json.loads(json_input.read())
 json_input.close()
 state_names = config_data["states"]
@@ -260,7 +261,7 @@ for year_number, year_results in complete_results.items():
 			xml_year.append(xml_state)
 	xml_results.append(xml_year)
 
-json_output = open("results.json", "w")
+json_output = open("../output/results.json", "w")
 json_output.write(json.dumps(complete_results))
 json_output.close()
 

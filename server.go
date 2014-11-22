@@ -149,7 +149,7 @@ func templateCommaNum(number int) string {
 }
 
 func templateChart(name string) template.HTML {
-	chartFile, _ := os.Open("/var/lib/house/" + name + ".svg")
+	chartFile, _ := os.Open("/var/lib/house/output/" + name + ".svg")
 	chartData, _ := ioutil.ReadAll(chartFile)
 	svgRegex, _ := regexp.Compile("(?s)<svg.*")
 	return template.HTML(svgRegex.Find(chartData))
@@ -234,7 +234,7 @@ func main() {
 	jsonDecoder.Decode(&configData)
 	file.Close()
 
-	file, _ = os.Open("results.json")
+	file, _ = os.Open("/var/lib/house/output/results.json")
 	jsonDecoder = json.NewDecoder(file)
 	jsonDecoder.Decode(&results)
 	file.Close()
@@ -286,8 +286,8 @@ func main() {
 	}
 
 	http.HandleFunc("/", rootHandler)
-	http.Handle("/charts/", http.StripPrefix("/charts/", http.FileServer(http.Dir("/var/lib/house/"))))
-	http.Handle("/maps/", http.StripPrefix("/maps/", http.FileServer(http.Dir("/var/lib/house/"))))
+	http.Handle("/charts/", http.StripPrefix("/charts/", http.FileServer(http.Dir("/var/lib/house/output/"))))
+	http.Handle("/maps/", http.StripPrefix("/maps/", http.FileServer(http.Dir("/var/lib/house/output/"))))
 	for _, year := range years {
 		http.HandleFunc("/"+year, yearHandler)
 		for _, state := range states {
