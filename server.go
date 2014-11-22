@@ -234,7 +234,7 @@ func main() {
 	jsonDecoder.Decode(&configData)
 	file.Close()
 
-	file, _ = os.Open("results.json")
+	file, _ = os.Open("/var/lib/house/output/results.json")
 	jsonDecoder = json.NewDecoder(file)
 	jsonDecoder.Decode(&results)
 	file.Close()

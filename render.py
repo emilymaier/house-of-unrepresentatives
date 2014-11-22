@@ -124,7 +124,7 @@ def scatter_parties(figure, r_expected, r_actual, d_expected, d_actual, filename
 	figure.savefig(filename)
 	pyplot.close(figure)
 
-results_file = open("results.json", "r")
+results_file = open("/var/lib/house/output/results.json", "r")
 results = json.loads(results_file.read())
 results_file.close()
 
