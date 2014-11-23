@@ -1,10 +1,9 @@
 {{define "overallTable"}}
 {{$totalVotes := .TotalVotes}}
-{{$totalSeats := .TotalSeats}}
 <table><thead><tr><th>Party</th><th colspan="2">Votes</th><th colspan="2">Seats</th><th>Expected Seats (State Popular Votes)</th></tr></thead><tbody>
 {{range .Parties}}
 	{{if len .Seats}}
-		<tr><td>{{.Name}}</td><td>{{commaNum .Votes}}</td><td>{{renderPercentage .Votes $totalVotes}}</td><td>{{.SeatCount}}</td><td>{{renderPercentage .SeatCount $totalSeats}}</td><td>{{printf "%.1f" .ExpectedSeats}}</td></tr>
+		<tr><td>{{.Name}}</td><td>{{commaNum .Votes}}</td><td>{{renderPercentage .Votes $totalVotes}}</td><td>{{.SeatCount}}</td><td>{{renderPercentage .SeatCount 435}}</td><td>{{printf "%.1f" .ExpectedSeats}}</td></tr>
 		<tr><td colspan="8">
 		<a href="#hide{{.Name}}" id="hide{{.Name}}" class="hide">+</a>
 		<a href="#show{{.Name}}" id="show{{.Name}}" class="show">–</a>
