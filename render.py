@@ -124,9 +124,8 @@ def scatter_parties(figure, r_expected, r_actual, d_expected, d_actual, filename
 	figure.savefig(filename)
 	pyplot.close(figure)
 
-results_file = open("/var/lib/house/output/results.json", "r")
-results = json.loads(results_file.read())
-results_file.close()
+tree = ElementTree.parse("/var/lib/house/output/results.xml")
+results = tree.getroot()
 
 f1 = pyplot.figure()
 f1.suptitle("Actual Versus Expected Seats by Party")
@@ -136,13 +135,13 @@ r_actual = []
 d_expected = []
 d_actual = []
 for year in range(1998, 2014, 2):
-	for party in results[str(year)]["parties"]:
-		if party["name"] == "Republican":
-			r_expected.append(party["expectedSeats"]["national"])
-			r_actual.append(party["seatCount"])
-		elif party["name"] == "Democrat":
-			d_expected.append(party["expectedSeats"]["national"])
-			d_actual.append(party["seatCount"])
+	for party in results.findall("./year[@year='%d']/yearParty" % year):
+		if party.attrib["name"] == "Republican":
+			r_expected.append(float(party.find("expectedSeats").attrib["national"]))
+			r_actual.append(int(party.attrib["seatCount"]))
+		elif party.attrib["name"] == "Democrat":
+			d_expected.append(float(party.find("expectedSeats").attrib["national"]))
+			d_actual.append(int(party.attrib["seatCount"]))
 scatter_parties_year(f1, r_expected, r_actual, d_expected, d_actual, "/var/lib/house/output/seats_national.svg")
 
 f2 = pyplot.figure()
@@ -151,11 +150,11 @@ f2.add_axes([0.1, 0.1, 0.8, 0.8], xlabel="Expected Seats (National Popular Vote 
 r_expected = []
 d_expected = []
 for year in range(1998, 2014, 2):
-	for party in results[str(year)]["parties"]:
-		if party["name"] == "Republican":
-			r_expected.append(party["expectedSeats"]["nationalWithout1"])
-		elif party["name"] == "Democrat":
-			d_expected.append(party["expectedSeats"]["nationalWithout1"])
+	for party in results.findall("./year[@year='%d']/yearParty" % year):
+		if party.attrib["name"] == "Republican":
+			r_expected.append(float(party.find("expectedSeats").attrib["nationalWithout1"]))
+		elif party.attrib["name"] == "Democrat":
+			d_expected.append(float(party.find("expectedSeats").attrib["nationalWithout1"]))
 scatter_parties_year(f2, r_expected, r_actual, d_expected, d_actual, "/var/lib/house/output/seats_national_without_1.svg")
 
 f3 = pyplot.figure()
@@ -164,11 +163,11 @@ f3.add_axes([0.1, 0.1, 0.8, 0.8], xlabel="Expected Seats (State Popular Votes)",
 r_expected = []
 d_expected = []
 for year in range(1998, 2014, 2):
-	for party in results[str(year)]["parties"]:
-		if party["name"] == "Republican":
-			r_expected.append(party["expectedSeats"]["state"])
-		elif party["name"] == "Democrat":
-			d_expected.append(party["expectedSeats"]["state"])
+	for party in results.findall("./year[@year='%d']/yearParty" % year):
+		if party.attrib["name"] == "Republican":
+			r_expected.append(float(party.find("expectedSeats").attrib["state"]))
+		elif party.attrib["name"] == "Democrat":
+			d_expected.append(float(party.find("expectedSeats").attrib["state"]))
 scatter_parties_year(f3, r_expected, r_actual, d_expected, d_actual, "/var/lib/house/output/seats_state.svg")
 
 r_expected = []
@@ -182,29 +181,29 @@ for year in range(1998, 2014, 2):
 	r_actual_year = {}
 	d_expected_year = {}
 	d_actual_year = {}
-	for state_name, state in results[str(year)]["states"].items():
-		for party in state["parties"]:
-			if party["name"] == "Republican":
-				r_expected.append(party["expectedSeats"]["national"])
-				r_actual.append(party["seatCount"])
-				r_expected_year[state_name] = party["expectedSeats"]["national"]
-				r_actual_year[state_name] = party["seatCount"]
-			elif party["name"] == "Democrat":
-				d_expected.append(party["expectedSeats"]["national"])
-				d_actual.append(party["seatCount"])
-				d_expected_year[state_name] = party["expectedSeats"]["national"]
-				d_actual_year[state_name] = party["seatCount"]
+	for state in results.findall("./year[@year='%d']/state" % year):
+		for party in state.findall("./stateParty"):
+			if party.attrib["name"] == "Republican":
+				r_expected.append(float(party.attrib["expectedSeats"]))
+				r_actual.append(int(party.attrib["seatCount"]))
+				r_expected_year[state.attrib["name"]] = float(party.attrib["expectedSeats"])
+				r_actual_year[state.attrib["name"]] = int(party.attrib["seatCount"])
+			elif party.attrib["name"] == "Democrat":
+				d_expected.append(float(party.attrib["expectedSeats"]))
+				d_actual.append(int(party.attrib["seatCount"]))
+				d_expected_year[state.attrib["name"]] = float(party.attrib["expectedSeats"])
+				d_actual_year[state.attrib["name"]] = int(party.attrib["seatCount"])
 	f_state = pyplot.figure()
 	f_state.suptitle("Actual versus Expected Seats per State by Party — " + str(year))
 	f_state.add_axes([0.1, 0.1, 0.8, 0.8], xlabel="Expected Seats", ylabel="Actual Seats")
 	scatter_parties_state(f_state, r_expected_year, r_actual_year, d_expected_year, d_actual_year, year, "/var/lib/house/output/seats_" + str(year) + ".svg")
 	district_margins = []
-	for state in results[str(year)]["states"].values():
-		for district in state["districts"]:
-			if district["winner"] == "Republican":
-				district_margins.append(district["margin"])
-			elif district["winner"] == "Democrat":
-				district_margins.append(-district["margin"])
+	for state in results.findall("./year[@year='%d']/state" % year):
+		for district in state.findall("./district"):
+			if district.attrib["winner"] == "Republican":
+				district_margins.append(float(district.attrib["margin"]))
+			elif district.attrib["winner"] == "Democrat":
+				district_margins.append(-float(district.attrib["margin"]))
 	district_margins.sort()
 	district_numbers = []
 	i = 0

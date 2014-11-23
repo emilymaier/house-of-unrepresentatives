@@ -6,7 +6,7 @@
 
 <h1>House of Representatives Election Results</h1>
 {{range index . "years"}}
-{{$yearResult := index $results .}}
+{{$yearResult := index $results.Years .}}
 <a href="{{root}}{{.}}">{{.}}</a> <span class="{{partyBiasClass $yearResult.Parties}}">{{partyBias $yearResult.Parties}}</span>
 {{end}}
 

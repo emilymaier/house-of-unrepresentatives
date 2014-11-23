@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # Copyright © 2014 Emily Maier
-# Generates results.json that holds all of the extracted election data.
+# Generates results.xml that holds all of the extracted election data.
 
 import bs4
 import json
@@ -84,12 +84,11 @@ def finalize_state(year, state, year_result, state_result):
 			elif candidate["votes"] > second_votes:
 				second_votes = candidate["votes"]
 			if candidate["party"] not in unsorted_parties:
-				unsorted_parties[candidate["party"]] = {"name": candidate["party"], "votes": 0, "seatCount": 0, "expectedSeats": {"national": 0}, "seats": []}
+				unsorted_parties[candidate["party"]] = {"name": candidate["party"], "votes": 0, "seatCount": 0, "expectedSeats": {"national": 0}}
 			unsorted_parties[candidate["party"]]["votes"] += candidate["votes"]
 		district["winner"] = winner_party
 		district["margin"] = float(winner_votes - second_votes) / district["totalVotes"]
 		unsorted_parties[winner_party]["seatCount"] += 1
-		unsorted_parties[winner_party]["seats"].append(district_number)
 		pg_cursor.execute("insert into results values(%d, '%s', %d, '%s')" % (year, state, district_number, winner_party))
 		district_number += 1
 	for party in unsorted_parties.values():
@@ -116,11 +115,9 @@ def finalize_year(year, complete_results, year_result):
 		year_result["totalVotes"] += state["totalVotes"]
 		for party in state["parties"]:
 			if party["name"] not in unsorted_parties:
-				unsorted_parties[party["name"]] = {"name": party["name"], "votes": 0, "seatCount": 0, "expectedSeats": {"national": 0, "nationalWithout1": 0, "state": 0}, "seats": []}
+				unsorted_parties[party["name"]] = {"name": party["name"], "votes": 0, "seatCount": 0, "expectedSeats": {"national": 0, "nationalWithout1": 0, "state": 0}}
 			unsorted_parties[party["name"]]["votes"] += party["votes"]
 			unsorted_parties[party["name"]]["seatCount"] += party["seatCount"]
-			if len(party["seats"]) > 0:
-				unsorted_parties[party["name"]]["seats"].append((state_name, party["seats"]))
 	for party in unsorted_parties.values():
 		party["expectedSeats"]["national"] = float(party["votes"]) * 435 / year_result["totalVotes"]
 		multi_district_votes_total = 0
@@ -252,17 +249,25 @@ for year in range(1998, 2014, 2):
 xml_tree = ElementTree.ElementTree(ElementTree.Element("results"))
 xml_results = xml_tree.getroot()
 for year_number, year_results in complete_results.items():
-	xml_year = ElementTree.element("year", {"year": year_number, "totalVotes": year_results.total_votes, "totalSeats": 435})
-		for party in year_results.parties:
-			xml_party = ElementTree.element("party", {"name": party.name, "votes": party.votes, "seatCount": party.seatCount})
-			xml_year.append(xml_party)
-		for state in year_results.states:
-			xml_state = ElementTree.element("state", {"name": state.name, "totalVotes": state.total_votes, "totalSeats": state.total_seats})
-			xml_year.append(xml_state)
+	xml_year = ElementTree.Element("year", {"year": str(year_number), "totalVotes": str(year_results["totalVotes"])})
+	for party in year_results["parties"]:
+		xml_party = ElementTree.Element("yearParty", {"name": party["name"], "votes": str(party["votes"]), "seatCount": str(party["seatCount"])})
+		xml_expected_seats = ElementTree.Element("expectedSeats", {"national": str(party["expectedSeats"]["national"]), "nationalWithout1": str(party["expectedSeats"]["nationalWithout1"]), "state": str(party["expectedSeats"]["state"])})
+		xml_party.append(xml_expected_seats)
+		xml_year.append(xml_party)
+	for state_name, state in year_results["states"].items():
+		xml_state = ElementTree.Element("state", {"name": state_name, "totalVotes": str(state["totalVotes"]), "totalSeats": str(state["totalSeats"])})
+		for party in state["parties"]:
+			xml_party = ElementTree.Element("stateParty", {"name": party["name"], "votes": str(party["votes"]), "seatCount": str(party["seatCount"]), "expectedSeats": str(party["expectedSeats"]["national"])})
+			xml_state.append(xml_party)
+		for district in state["districts"]:
+			xml_district = ElementTree.Element("district", {"totalVotes": str(district["totalVotes"]), "winner": district["winner"], "margin": str(district["margin"])})
+			for candidate in district["candidates"]:
+				xml_candidate = ElementTree.Element("candidate", {"name": candidate["name"], "party": candidate["party"], "votes": str(candidate["votes"])})
+				xml_district.append(xml_candidate)
+			xml_state.append(xml_district)
+		xml_year.append(xml_state)
 	xml_results.append(xml_year)
-
-json_output = open("../output/results.json", "w")
-json_output.write(json.dumps(complete_results))
-json_output.close()
+xml_tree.write("../output/results.xml")
 
 pg_conn.commit()
